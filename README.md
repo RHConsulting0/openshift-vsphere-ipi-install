@@ -2,7 +2,6 @@
 
 - [Cluster Installation Instructions](#cluster-installation-instructions)
   - [Prerequisites for Cluster Installation](#prerequisites-for-cluster-installation)
-  - [Initialize the Cluster](#initialize-the-cluster)
   - [Before Moving to Next Steps](#before-moving-to-next-steps)
   - [General instructions](#general-instructions)
     - [All Plays in One](#all-plays-in-one)
@@ -37,12 +36,14 @@
 
 These instructions are based on the Installer-provisioned Infrastructure installation procedure.(https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/installing_on_vmware_vsphere/installer-provisioned-infrastructure#installing-vsphere-installer-provisioned-customizations)
 
-1. Create an ssh-key pair for your user: <https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/installing_on_vmware_vsphere/installer-provisioned-infrastructure#ssh-agent-using_ipi-vsphere-preparing-to-install>
+1. Create an ssh-key pair for your user: <https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/installing_on_vmware_vsphere/installer-provisioned-infrastructure#ssh-agent-using_ipi-vsphere-preparing-to-install> 
+Shell script to create key pair:
+```sh
 
-2. Copy the contents of your ssh-key pub file to the last line, under `sshKey: |` in the following file:
+2. UPDATE: Moving this to Ansible... Copy the contents of your ssh-key pub file to the last line, under `sshKey: |` in the following file:
   ansible/roles/initialize_cluster/templates/install-config.yaml.j2
 
-3. Update group_vars/pull-secret.yaml with customer pull-secret
+3. UPDATE: Moving this to Ansible... Update group_vars/pull-secret.yaml with customer pull-secret
 `ansible-vault edit group_vars/pull-secret.yaml --vault-password-file=../resources/vault-password.txt`
 
 4. Make sure there is a cluster specific variables folder and all.yaml under ansible/group_vars/cluster.

@@ -29,8 +29,8 @@ if [ ! -f group_vars/env/${ENV}/default-vault.yaml ]; then
   echo "Error: group_vars/env/${ENV}/default-vault.yaml file not found!"
   return 1
 fi
-if [ ! -f group_vars/pull-secret.yaml ]; then
-  echo "Error: group_vars/pull-secret.yaml file not found!"
+if [ ! -f secrets/pull_secret.json ]; then
+  echo "Error: secrets/pull_secret.json file not found!"
   return 1
 fi
 if [ ! -f group_vars/cluster/${CLUSTER}/ssh-key.yaml ]; then
@@ -52,11 +52,11 @@ podman run --rm \
   -v $(pwd)/../resources:/runner/resources:Z \
   -v ~/.ansible:/home/runner/.ansible:Z \
   registry.redhat.io/ansible-automation-platform-25/ee-supported-rhel9:latest \
-  ansible-playbook -i /runner/project/inventory \
+  ansible-playbook -vvvv -i /runner/project/inventory \
     -e @/runner/project/group_vars/cluster/${CLUSTER}/all.yaml \
     -e @/runner/project/group_vars/env/${ENV}/default-vault.yaml \
     -e @/runner/project/group_vars/env/${ENV}/all.yaml \
-    -e @/runner/project/group_vars/pull-secret.yaml \
+    -e @/runner/project/secrets/pull_secret.json \
     -e @/runner/project/group_vars/cluster/${CLUSTER}/ssh-key.yaml \
     --vault-password-file=/runner/resources/vault-password.txt \
-    -vvvv /runner/project/initialize_cluster.yaml
+    /runner/project/initialize_cluster.yaml

@@ -15,7 +15,6 @@ script declined parsing /runner/project/inventory as it did not pass its verify_
 auto declined parsing /runner/project/inventory as it did not pass its verify_file() method
 Trying secret FileVaultSecret(filename='/runner/resources/vault-password.txt') for vault_id=default
 Trying secret FileVaultSecret(filename='/runner/resources/vault-password.txt') for vault_id=default
-Trying secret FileVaultSecret(filename='/runner/resources/vault-password.txt') for vault_id=default
 Set default localhost to localhost
 Parsed /runner/project/inventory inventory source with yaml plugin
 Loading callback plugin default of type stdout, v2.0 from /usr/lib/python3.11/site-packages/ansible/plugins/callback/default.py
@@ -30,7 +29,7 @@ connection: ssh
 become_method: sudo
 tags: ('all',)
 inventory: ('/runner/project/inventory',)
-extra_vars: ('@/runner/project/group_vars/cluster/lab/all.yaml', '@/runner/project/group_vars/env/lab/default-vault.yaml', '@/runner/project/group_vars/env/lab/all.yaml', '@/runner/project/group_vars/pull-secret.yaml', '@/runner/project/group_vars/cluster/lab/ssh-key.yaml')
+extra_vars: ('@/runner/project/group_vars/cluster/lab/all.yaml', '@/runner/project/group_vars/env/lab/default-vault.yaml', '@/runner/project/group_vars/env/lab/all.yaml', '@/runner/project/secrets/pull_secret.json', '@/runner/project/group_vars/cluster/lab/ssh-key.yaml')
 vault_password_files: ('/runner/resources/vault-password.txt',)
 forks: 5
 1 plays in /runner/project/initialize_cluster.yaml
@@ -41,24 +40,24 @@ TASK [Gathering Facts] *********************************************************
 task path: /runner/project/initialize_cluster.yaml:2
 <localhost> ESTABLISH LOCAL CONNECTION FOR USER: root
 <localhost> EXEC /bin/sh -c 'echo ~root && sleep 0'
-<localhost> EXEC /bin/sh -c '( umask 77 && mkdir -p "` echo /home/runner/.ansible/tmp `"&& mkdir "` echo /home/runner/.ansible/tmp/ansible-tmp-1757354432.8752859-16-29293769597102 `" && echo ansible-tmp-1757354432.8752859-16-29293769597102="` echo /home/runner/.ansible/tmp/ansible-tmp-1757354432.8752859-16-29293769597102 `" ) && sleep 0'
+<localhost> EXEC /bin/sh -c '( umask 77 && mkdir -p "` echo /home/runner/.ansible/tmp `"&& mkdir "` echo /home/runner/.ansible/tmp/ansible-tmp-1757366549.6279428-16-58745843690955 `" && echo ansible-tmp-1757366549.6279428-16-58745843690955="` echo /home/runner/.ansible/tmp/ansible-tmp-1757366549.6279428-16-58745843690955 `" ) && sleep 0'
 Using module file /usr/lib/python3.11/site-packages/ansible/modules/setup.py
-<localhost> PUT /home/runner/.ansible/tmp/ansible-local-13qjnmnkkh/tmpjq61lo8o TO /home/runner/.ansible/tmp/ansible-tmp-1757354432.8752859-16-29293769597102/AnsiballZ_setup.py
-<localhost> EXEC /bin/sh -c 'chmod u+x /home/runner/.ansible/tmp/ansible-tmp-1757354432.8752859-16-29293769597102/ /home/runner/.ansible/tmp/ansible-tmp-1757354432.8752859-16-29293769597102/AnsiballZ_setup.py && sleep 0'
-<localhost> EXEC /bin/sh -c '/usr/bin/python3 /home/runner/.ansible/tmp/ansible-tmp-1757354432.8752859-16-29293769597102/AnsiballZ_setup.py && sleep 0'
-<localhost> EXEC /bin/sh -c 'rm -f -r /home/runner/.ansible/tmp/ansible-tmp-1757354432.8752859-16-29293769597102/ > /dev/null 2>&1 && sleep 0'
+<localhost> PUT /home/runner/.ansible/tmp/ansible-local-13fg1cwq80/tmpbpe4nu3u TO /home/runner/.ansible/tmp/ansible-tmp-1757366549.6279428-16-58745843690955/AnsiballZ_setup.py
+<localhost> EXEC /bin/sh -c 'chmod u+x /home/runner/.ansible/tmp/ansible-tmp-1757366549.6279428-16-58745843690955/ /home/runner/.ansible/tmp/ansible-tmp-1757366549.6279428-16-58745843690955/AnsiballZ_setup.py && sleep 0'
+<localhost> EXEC /bin/sh -c '/usr/bin/python3 /home/runner/.ansible/tmp/ansible-tmp-1757366549.6279428-16-58745843690955/AnsiballZ_setup.py && sleep 0'
+<localhost> EXEC /bin/sh -c 'rm -f -r /home/runner/.ansible/tmp/ansible-tmp-1757366549.6279428-16-58745843690955/ > /dev/null 2>&1 && sleep 0'
 ok: [localhost]
 
 TASK [initialize_cluster : Check for openshift-install] ************************
 task path: /runner/project/roles/initialize_cluster/tasks/main.yaml:4
 <localhost> ESTABLISH LOCAL CONNECTION FOR USER: root
 <localhost> EXEC /bin/sh -c 'echo ~root && sleep 0'
-<localhost> EXEC /bin/sh -c '( umask 77 && mkdir -p "` echo /home/runner/.ansible/tmp `"&& mkdir "` echo /home/runner/.ansible/tmp/ansible-tmp-1757354433.446763-61-214383396821508 `" && echo ansible-tmp-1757354433.446763-61-214383396821508="` echo /home/runner/.ansible/tmp/ansible-tmp-1757354433.446763-61-214383396821508 `" ) && sleep 0'
+<localhost> EXEC /bin/sh -c '( umask 77 && mkdir -p "` echo /home/runner/.ansible/tmp `"&& mkdir "` echo /home/runner/.ansible/tmp/ansible-tmp-1757366550.2038095-61-257850028152098 `" && echo ansible-tmp-1757366550.2038095-61-257850028152098="` echo /home/runner/.ansible/tmp/ansible-tmp-1757366550.2038095-61-257850028152098 `" ) && sleep 0'
 Using module file /usr/lib/python3.11/site-packages/ansible/modules/stat.py
-<localhost> PUT /home/runner/.ansible/tmp/ansible-local-13qjnmnkkh/tmphzxcc0js TO /home/runner/.ansible/tmp/ansible-tmp-1757354433.446763-61-214383396821508/AnsiballZ_stat.py
-<localhost> EXEC /bin/sh -c 'chmod u+x /home/runner/.ansible/tmp/ansible-tmp-1757354433.446763-61-214383396821508/ /home/runner/.ansible/tmp/ansible-tmp-1757354433.446763-61-214383396821508/AnsiballZ_stat.py && sleep 0'
-<localhost> EXEC /bin/sh -c '/usr/bin/python3 /home/runner/.ansible/tmp/ansible-tmp-1757354433.446763-61-214383396821508/AnsiballZ_stat.py && sleep 0'
-<localhost> EXEC /bin/sh -c 'rm -f -r /home/runner/.ansible/tmp/ansible-tmp-1757354433.446763-61-214383396821508/ > /dev/null 2>&1 && sleep 0'
+<localhost> PUT /home/runner/.ansible/tmp/ansible-local-13fg1cwq80/tmp30c4rn63 TO /home/runner/.ansible/tmp/ansible-tmp-1757366550.2038095-61-257850028152098/AnsiballZ_stat.py
+<localhost> EXEC /bin/sh -c 'chmod u+x /home/runner/.ansible/tmp/ansible-tmp-1757366550.2038095-61-257850028152098/ /home/runner/.ansible/tmp/ansible-tmp-1757366550.2038095-61-257850028152098/AnsiballZ_stat.py && sleep 0'
+<localhost> EXEC /bin/sh -c '/usr/bin/python3 /home/runner/.ansible/tmp/ansible-tmp-1757366550.2038095-61-257850028152098/AnsiballZ_stat.py && sleep 0'
+<localhost> EXEC /bin/sh -c 'rm -f -r /home/runner/.ansible/tmp/ansible-tmp-1757366550.2038095-61-257850028152098/ > /dev/null 2>&1 && sleep 0'
 ok: [localhost] => {
     "changed": false,
     "invocation": {
@@ -88,12 +87,12 @@ TASK [initialize_cluster : Clean up existing install-dir] **********************
 task path: /runner/project/roles/initialize_cluster/tasks/main.yaml:16
 <localhost> ESTABLISH LOCAL CONNECTION FOR USER: root
 <localhost> EXEC /bin/sh -c 'echo ~root && sleep 0'
-<localhost> EXEC /bin/sh -c '( umask 77 && mkdir -p "` echo /home/runner/.ansible/tmp `"&& mkdir "` echo /home/runner/.ansible/tmp/ansible-tmp-1757354433.6401513-77-175274641813956 `" && echo ansible-tmp-1757354433.6401513-77-175274641813956="` echo /home/runner/.ansible/tmp/ansible-tmp-1757354433.6401513-77-175274641813956 `" ) && sleep 0'
+<localhost> EXEC /bin/sh -c '( umask 77 && mkdir -p "` echo /home/runner/.ansible/tmp `"&& mkdir "` echo /home/runner/.ansible/tmp/ansible-tmp-1757366550.397496-77-126362583116264 `" && echo ansible-tmp-1757366550.397496-77-126362583116264="` echo /home/runner/.ansible/tmp/ansible-tmp-1757366550.397496-77-126362583116264 `" ) && sleep 0'
 Using module file /usr/lib/python3.11/site-packages/ansible/modules/file.py
-<localhost> PUT /home/runner/.ansible/tmp/ansible-local-13qjnmnkkh/tmpx6il580r TO /home/runner/.ansible/tmp/ansible-tmp-1757354433.6401513-77-175274641813956/AnsiballZ_file.py
-<localhost> EXEC /bin/sh -c 'chmod u+x /home/runner/.ansible/tmp/ansible-tmp-1757354433.6401513-77-175274641813956/ /home/runner/.ansible/tmp/ansible-tmp-1757354433.6401513-77-175274641813956/AnsiballZ_file.py && sleep 0'
-<localhost> EXEC /bin/sh -c '/usr/bin/python3 /home/runner/.ansible/tmp/ansible-tmp-1757354433.6401513-77-175274641813956/AnsiballZ_file.py && sleep 0'
-<localhost> EXEC /bin/sh -c 'rm -f -r /home/runner/.ansible/tmp/ansible-tmp-1757354433.6401513-77-175274641813956/ > /dev/null 2>&1 && sleep 0'
+<localhost> PUT /home/runner/.ansible/tmp/ansible-local-13fg1cwq80/tmpul0yh6lr TO /home/runner/.ansible/tmp/ansible-tmp-1757366550.397496-77-126362583116264/AnsiballZ_file.py
+<localhost> EXEC /bin/sh -c 'chmod u+x /home/runner/.ansible/tmp/ansible-tmp-1757366550.397496-77-126362583116264/ /home/runner/.ansible/tmp/ansible-tmp-1757366550.397496-77-126362583116264/AnsiballZ_file.py && sleep 0'
+<localhost> EXEC /bin/sh -c '/usr/bin/python3 /home/runner/.ansible/tmp/ansible-tmp-1757366550.397496-77-126362583116264/AnsiballZ_file.py && sleep 0'
+<localhost> EXEC /bin/sh -c 'rm -f -r /home/runner/.ansible/tmp/ansible-tmp-1757366550.397496-77-126362583116264/ > /dev/null 2>&1 && sleep 0'
 changed: [localhost] => {
     "changed": true,
     "diff": {
@@ -143,12 +142,12 @@ TASK [initialize_cluster : Create bin, install-dir and downloads folders] ******
 task path: /runner/project/roles/initialize_cluster/tasks/main.yaml:21
 <localhost> ESTABLISH LOCAL CONNECTION FOR USER: root
 <localhost> EXEC /bin/sh -c 'echo ~root && sleep 0'
-<localhost> EXEC /bin/sh -c '( umask 77 && mkdir -p "` echo /home/runner/.ansible/tmp `"&& mkdir "` echo /home/runner/.ansible/tmp/ansible-tmp-1757354433.8240418-92-167733745360929 `" && echo ansible-tmp-1757354433.8240418-92-167733745360929="` echo /home/runner/.ansible/tmp/ansible-tmp-1757354433.8240418-92-167733745360929 `" ) && sleep 0'
+<localhost> EXEC /bin/sh -c '( umask 77 && mkdir -p "` echo /home/runner/.ansible/tmp `"&& mkdir "` echo /home/runner/.ansible/tmp/ansible-tmp-1757366550.5853963-92-169956564603807 `" && echo ansible-tmp-1757366550.5853963-92-169956564603807="` echo /home/runner/.ansible/tmp/ansible-tmp-1757366550.5853963-92-169956564603807 `" ) && sleep 0'
 Using module file /usr/lib/python3.11/site-packages/ansible/modules/file.py
-<localhost> PUT /home/runner/.ansible/tmp/ansible-local-13qjnmnkkh/tmpirt0qb9x TO /home/runner/.ansible/tmp/ansible-tmp-1757354433.8240418-92-167733745360929/AnsiballZ_file.py
-<localhost> EXEC /bin/sh -c 'chmod u+x /home/runner/.ansible/tmp/ansible-tmp-1757354433.8240418-92-167733745360929/ /home/runner/.ansible/tmp/ansible-tmp-1757354433.8240418-92-167733745360929/AnsiballZ_file.py && sleep 0'
-<localhost> EXEC /bin/sh -c '/usr/bin/python3 /home/runner/.ansible/tmp/ansible-tmp-1757354433.8240418-92-167733745360929/AnsiballZ_file.py && sleep 0'
-<localhost> EXEC /bin/sh -c 'rm -f -r /home/runner/.ansible/tmp/ansible-tmp-1757354433.8240418-92-167733745360929/ > /dev/null 2>&1 && sleep 0'
+<localhost> PUT /home/runner/.ansible/tmp/ansible-local-13fg1cwq80/tmp1x9fl07o TO /home/runner/.ansible/tmp/ansible-tmp-1757366550.5853963-92-169956564603807/AnsiballZ_file.py
+<localhost> EXEC /bin/sh -c 'chmod u+x /home/runner/.ansible/tmp/ansible-tmp-1757366550.5853963-92-169956564603807/ /home/runner/.ansible/tmp/ansible-tmp-1757366550.5853963-92-169956564603807/AnsiballZ_file.py && sleep 0'
+<localhost> EXEC /bin/sh -c '/usr/bin/python3 /home/runner/.ansible/tmp/ansible-tmp-1757366550.5853963-92-169956564603807/AnsiballZ_file.py && sleep 0'
+<localhost> EXEC /bin/sh -c 'rm -f -r /home/runner/.ansible/tmp/ansible-tmp-1757366550.5853963-92-169956564603807/ > /dev/null 2>&1 && sleep 0'
 changed: [localhost] => {
     "changed": true,
     "diff": {
@@ -200,54 +199,159 @@ TASK [initialize_cluster : Create install-config file from template] ***********
 task path: /runner/project/roles/initialize_cluster/tasks/main.yaml:27
 <localhost> ESTABLISH LOCAL CONNECTION FOR USER: root
 <localhost> EXEC /bin/sh -c 'echo ~root && sleep 0'
-<localhost> EXEC /bin/sh -c '( umask 77 && mkdir -p "` echo /home/runner/.ansible/tmp `"&& mkdir "` echo /home/runner/.ansible/tmp/ansible-tmp-1757354433.9428816-107-273068256803384 `" && echo ansible-tmp-1757354433.9428816-107-273068256803384="` echo /home/runner/.ansible/tmp/ansible-tmp-1757354433.9428816-107-273068256803384 `" ) && sleep 0'
-<localhost> EXEC /bin/sh -c 'rm -f -r /home/runner/.ansible/tmp/ansible-tmp-1757354433.9428816-107-273068256803384/ > /dev/null 2>&1 && sleep 0'
+<localhost> EXEC /bin/sh -c '( umask 77 && mkdir -p "` echo /home/runner/.ansible/tmp `"&& mkdir "` echo /home/runner/.ansible/tmp/ansible-tmp-1757366550.6958046-107-44440481782434 `" && echo ansible-tmp-1757366550.6958046-107-44440481782434="` echo /home/runner/.ansible/tmp/ansible-tmp-1757366550.6958046-107-44440481782434 `" ) && sleep 0'
+Using module file /usr/lib/python3.11/site-packages/ansible/modules/stat.py
+<localhost> PUT /home/runner/.ansible/tmp/ansible-local-13fg1cwq80/tmpz59sg5tl TO /home/runner/.ansible/tmp/ansible-tmp-1757366550.6958046-107-44440481782434/AnsiballZ_stat.py
+<localhost> EXEC /bin/sh -c 'chmod u+x /home/runner/.ansible/tmp/ansible-tmp-1757366550.6958046-107-44440481782434/ /home/runner/.ansible/tmp/ansible-tmp-1757366550.6958046-107-44440481782434/AnsiballZ_stat.py && sleep 0'
+<localhost> EXEC /bin/sh -c '/usr/bin/python3 /home/runner/.ansible/tmp/ansible-tmp-1757366550.6958046-107-44440481782434/AnsiballZ_stat.py && sleep 0'
+<localhost> PUT /home/runner/.ansible/tmp/ansible-local-13fg1cwq80/tmpox5vi1wi/install-config.yaml.j2 TO /home/runner/.ansible/tmp/ansible-tmp-1757366550.6958046-107-44440481782434/source
+<localhost> EXEC /bin/sh -c 'chmod u+x /home/runner/.ansible/tmp/ansible-tmp-1757366550.6958046-107-44440481782434/ /home/runner/.ansible/tmp/ansible-tmp-1757366550.6958046-107-44440481782434/source && sleep 0'
+Using module file /usr/lib/python3.11/site-packages/ansible/modules/copy.py
+<localhost> PUT /home/runner/.ansible/tmp/ansible-local-13fg1cwq80/tmpp1o0vcvm TO /home/runner/.ansible/tmp/ansible-tmp-1757366550.6958046-107-44440481782434/AnsiballZ_copy.py
+<localhost> EXEC /bin/sh -c 'chmod u+x /home/runner/.ansible/tmp/ansible-tmp-1757366550.6958046-107-44440481782434/ /home/runner/.ansible/tmp/ansible-tmp-1757366550.6958046-107-44440481782434/AnsiballZ_copy.py && sleep 0'
+<localhost> EXEC /bin/sh -c '/usr/bin/python3 /home/runner/.ansible/tmp/ansible-tmp-1757366550.6958046-107-44440481782434/AnsiballZ_copy.py && sleep 0'
+<localhost> EXEC /bin/sh -c 'rm -f -r /home/runner/.ansible/tmp/ansible-tmp-1757366550.6958046-107-44440481782434/ > /dev/null 2>&1 && sleep 0'
+changed: [localhost] => {
+    "changed": true,
+    "checksum": "7842504d7041fb29814e8cef5d3fae84ca4dc3a6",
+    "dest": "/runner/project/install-dir/install-config.yaml",
+    "diff": [],
+    "gid": 0,
+    "group": "root",
+    "invocation": {
+        "module_args": {
+            "_original_basename": "install-config.yaml.j2",
+            "attributes": null,
+            "backup": false,
+            "checksum": "7842504d7041fb29814e8cef5d3fae84ca4dc3a6",
+            "content": null,
+            "dest": "/runner/project/install-dir/install-config.yaml",
+            "directory_mode": null,
+            "follow": false,
+            "force": true,
+            "group": null,
+            "local_follow": null,
+            "mode": "0644",
+            "owner": null,
+            "remote_src": null,
+            "selevel": null,
+            "serole": null,
+            "setype": null,
+            "seuser": null,
+            "src": "/home/runner/.ansible/tmp/ansible-tmp-1757366550.6958046-107-44440481782434/source",
+            "unsafe_writes": false,
+            "validate": null
+        }
+    },
+    "md5sum": "34701b6ce373e66014400d1dcf1790b6",
+    "mode": "0644",
+    "owner": "root",
+    "size": 8164,
+    "src": "/home/runner/.ansible/tmp/ansible-tmp-1757366550.6958046-107-44440481782434/source",
+    "state": "file",
+    "uid": 0
+}
+
+TASK [initialize_cluster : Backup the install-config.yaml file] ****************
+task path: /runner/project/roles/initialize_cluster/tasks/main.yaml:33
+<localhost> ESTABLISH LOCAL CONNECTION FOR USER: root
+<localhost> EXEC /bin/sh -c 'echo ~root && sleep 0'
+<localhost> EXEC /bin/sh -c '( umask 77 && mkdir -p "` echo /home/runner/.ansible/tmp `"&& mkdir "` echo /home/runner/.ansible/tmp/ansible-tmp-1757366550.9712062-128-277521539237518 `" && echo ansible-tmp-1757366550.9712062-128-277521539237518="` echo /home/runner/.ansible/tmp/ansible-tmp-1757366550.9712062-128-277521539237518 `" ) && sleep 0'
+Using module file /usr/lib/python3.11/site-packages/ansible/modules/stat.py
+<localhost> PUT /home/runner/.ansible/tmp/ansible-local-13fg1cwq80/tmp8omd7e3l TO /home/runner/.ansible/tmp/ansible-tmp-1757366550.9712062-128-277521539237518/AnsiballZ_stat.py
+<localhost> EXEC /bin/sh -c 'chmod u+x /home/runner/.ansible/tmp/ansible-tmp-1757366550.9712062-128-277521539237518/ /home/runner/.ansible/tmp/ansible-tmp-1757366550.9712062-128-277521539237518/AnsiballZ_stat.py && sleep 0'
+<localhost> EXEC /bin/sh -c '/usr/bin/python3 /home/runner/.ansible/tmp/ansible-tmp-1757366550.9712062-128-277521539237518/AnsiballZ_stat.py && sleep 0'
+<localhost> PUT /runner/project/install-dir/install-config.yaml TO /home/runner/.ansible/tmp/ansible-tmp-1757366550.9712062-128-277521539237518/source
+<localhost> EXEC /bin/sh -c 'chmod u+x /home/runner/.ansible/tmp/ansible-tmp-1757366550.9712062-128-277521539237518/ /home/runner/.ansible/tmp/ansible-tmp-1757366550.9712062-128-277521539237518/source && sleep 0'
+Using module file /usr/lib/python3.11/site-packages/ansible/modules/copy.py
+<localhost> PUT /home/runner/.ansible/tmp/ansible-local-13fg1cwq80/tmpa4ix0msi TO /home/runner/.ansible/tmp/ansible-tmp-1757366550.9712062-128-277521539237518/AnsiballZ_copy.py
+<localhost> EXEC /bin/sh -c 'chmod u+x /home/runner/.ansible/tmp/ansible-tmp-1757366550.9712062-128-277521539237518/ /home/runner/.ansible/tmp/ansible-tmp-1757366550.9712062-128-277521539237518/AnsiballZ_copy.py && sleep 0'
+<localhost> EXEC /bin/sh -c '/usr/bin/python3 /home/runner/.ansible/tmp/ansible-tmp-1757366550.9712062-128-277521539237518/AnsiballZ_copy.py && sleep 0'
+<localhost> EXEC /bin/sh -c 'rm -f -r /home/runner/.ansible/tmp/ansible-tmp-1757366550.9712062-128-277521539237518/ > /dev/null 2>&1 && sleep 0'
+changed: [localhost] => {
+    "changed": true,
+    "checksum": "7842504d7041fb29814e8cef5d3fae84ca4dc3a6",
+    "dest": "/runner/project/install-dir/install-config.yaml.orig",
+    "diff": [],
+    "gid": 0,
+    "group": "root",
+    "invocation": {
+        "module_args": {
+            "_original_basename": "install-config.yaml",
+            "attributes": null,
+            "backup": false,
+            "checksum": "7842504d7041fb29814e8cef5d3fae84ca4dc3a6",
+            "content": null,
+            "dest": "/runner/project/install-dir/install-config.yaml.orig",
+            "directory_mode": null,
+            "follow": false,
+            "force": true,
+            "group": null,
+            "local_follow": null,
+            "mode": "0664",
+            "owner": null,
+            "remote_src": null,
+            "selevel": null,
+            "serole": null,
+            "setype": null,
+            "seuser": null,
+            "src": "/home/runner/.ansible/tmp/ansible-tmp-1757366550.9712062-128-277521539237518/source",
+            "unsafe_writes": false,
+            "validate": null
+        }
+    },
+    "md5sum": "34701b6ce373e66014400d1dcf1790b6",
+    "mode": "0664",
+    "owner": "root",
+    "size": 8164,
+    "src": "/home/runner/.ansible/tmp/ansible-tmp-1757366550.9712062-128-277521539237518/source",
+    "state": "file",
+    "uid": 0
+}
+
+TASK [initialize_cluster : Initialize IPI Cluster installation] ****************
+task path: /runner/project/roles/initialize_cluster/tasks/main.yaml:39
+<localhost> ESTABLISH LOCAL CONNECTION FOR USER: root
+<localhost> EXEC /bin/sh -c 'echo ~root && sleep 0'
+<localhost> EXEC /bin/sh -c '( umask 77 && mkdir -p "` echo /home/runner/.ansible/tmp `"&& mkdir "` echo /home/runner/.ansible/tmp/ansible-tmp-1757366551.1756487-149-247379636400504 `" && echo ansible-tmp-1757366551.1756487-149-247379636400504="` echo /home/runner/.ansible/tmp/ansible-tmp-1757366551.1756487-149-247379636400504 `" ) && sleep 0'
+Using module file /usr/lib/python3.11/site-packages/ansible/modules/command.py
+<localhost> PUT /home/runner/.ansible/tmp/ansible-local-13fg1cwq80/tmp9bnhlp8h TO /home/runner/.ansible/tmp/ansible-tmp-1757366551.1756487-149-247379636400504/AnsiballZ_command.py
+<localhost> EXEC /bin/sh -c 'chmod u+x /home/runner/.ansible/tmp/ansible-tmp-1757366551.1756487-149-247379636400504/ /home/runner/.ansible/tmp/ansible-tmp-1757366551.1756487-149-247379636400504/AnsiballZ_command.py && sleep 0'
+<localhost> EXEC /bin/sh -c '/usr/bin/python3 /home/runner/.ansible/tmp/ansible-tmp-1757366551.1756487-149-247379636400504/AnsiballZ_command.py && sleep 0'
+<localhost> EXEC /bin/sh -c 'rm -f -r /home/runner/.ansible/tmp/ansible-tmp-1757366551.1756487-149-247379636400504/ > /dev/null 2>&1 && sleep 0'
 The full traceback is:
-Traceback (most recent call last):
-  File "/usr/lib/python3.11/site-packages/ansible/template/__init__.py", line 981, in do_template
-    res = myenv.concat(rf)
-          ^^^^^^^^^^^^^^^^
-  File "/usr/lib/python3.11/site-packages/ansible/template/native_helpers.py", line 139, in ansible_concat
-    for v in nodes:
-  File "<template>", line 125, in root
-  File "/usr/lib/python3.11/site-packages/ansible/template/__init__.py", line 326, in wrapper
-    ret = func(*args, **kwargs)
-          ^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/lib/python3.11/site-packages/ansible/plugins/filter/core.py", line 76, in to_json
-    return json.dumps(a, cls=AnsibleJSONEncoder, *args, **kw)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/lib64/python3.11/json/__init__.py", line 238, in dumps
-    **kw).encode(obj)
-          ^^^^^^^^^^^
-  File "/usr/lib64/python3.11/json/encoder.py", line 200, in encode
-    chunks = self.iterencode(o, _one_shot=True)
-             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/lib/python3.11/site-packages/ansible/module_utils/common/json.py", line 86, in iterencode
-    return super(AnsibleJSONEncoder, self).iterencode(o, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/lib64/python3.11/json/encoder.py", line 258, in iterencode
-    return _iterencode(o, 0)
-           ^^^^^^^^^^^^^^^^^
-  File "/usr/lib/python3.11/site-packages/ansible/module_utils/common/json.py", line 58, in default
-    if getattr(o, '__ENCRYPTED__', False):
-  File "/usr/lib/python3.11/site-packages/jinja2/runtime.py", line 859, in _fail_with_undefined_error
-    raise self._undefined_exception(self._undefined_message)
-jinja2.exceptions.UndefinedError: 'pull_secret_file' is undefined
-
-During handling of the above exception, another exception occurred:
-
-Traceback (most recent call last):
-  File "/usr/lib/python3.11/site-packages/ansible/plugins/action/template.py", line 152, in run
-    resultant = templar.do_template(template_data, preserve_trailing_newlines=True, escape_backslashes=False, overrides=overrides)
-                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/lib/python3.11/site-packages/ansible/template/__init__.py", line 1015, in do_template
-    raise AnsibleUndefinedVariable(e, orig_exc=e)
-ansible.errors.AnsibleUndefinedVariable: 'pull_secret_file' is undefined. 'pull_secret_file' is undefined
+  File "/tmp/ansible_ansible.legacy.command_payload_itepswca/ansible_ansible.legacy.command_payload.zip/ansible/module_utils/basic.py", line 2024, in run_command
+    cmd = subprocess.Popen(args, **kwargs)
+  File "/usr/lib64/python3.9/subprocess.py", line 951, in __init__
+    self._execute_child(args, executable, preexec_fn, close_fds,
+  File "/usr/lib64/python3.9/subprocess.py", line 1837, in _execute_child
+    raise child_exception_type(errno_num, err_msg, err_filename)
 fatal: [localhost]: FAILED! => {
     "changed": false,
-    "msg": "AnsibleUndefinedVariable: 'pull_secret_file' is undefined. 'pull_secret_file' is undefined"
+    "cmd": "/usr/local/bin/openshift-install create cluster --dir=/runner/project/install-dir --log-level=warn",
+    "invocation": {
+        "module_args": {
+            "_raw_params": "/usr/local/bin/openshift-install create cluster --dir=/runner/project/install-dir --log-level=warn",
+            "_uses_shell": false,
+            "argv": null,
+            "chdir": null,
+            "creates": null,
+            "executable": null,
+            "expand_argument_vars": true,
+            "removes": null,
+            "stdin": null,
+            "stdin_add_newline": true,
+            "strip_empty_ends": true
+        }
+    },
+    "msg": "[Errno 2] No such file or directory: b'/usr/local/bin/openshift-install'",
+    "rc": 2,
+    "stderr": "",
+    "stderr_lines": [],
+    "stdout": "",
+    "stdout_lines": []
 }
 
 PLAY RECAP *********************************************************************
-localhost                  : ok=4    changed=2    unreachable=0    failed=1    skipped=1    rescued=0    ignored=0   
+localhost                  : ok=6    changed=4    unreachable=0    failed=1    skipped=1    rescued=0    ignored=0   
 

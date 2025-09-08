@@ -16,7 +16,7 @@ podman run --rm -v $(pwd):/runner/project:Z -v ~/.ansible:/home/runner/.ansible:
 -e @./group_vars/cluster/[cluster]/all.yaml \
 -e @./group_vars/env/[env]/default-vault.yaml \
 -e @./group_vars/env/[env]/all.yaml \
--e @./group_vars/pull-secret.yaml \
+-e @./secrets/pull_secret.json \
 -e @./group_vars/cluster/[cluster]/ssh-key.yaml \
 --vault-password-file=../resources/vault-password.txt \
 -vvvv /runner/project/initialize_cluster.yaml
@@ -27,7 +27,7 @@ ansible-playbook -i inventory \
 -e @./group_vars/cluster/[cluster]/all.yaml \
 -e @./group_vars/env/[env]/default-vault.yaml \
 -e @./group_vars/env/[env]/all.yaml \
--e @./group_vars/pull-secret.yaml \
+-e @./secrets/pull_secret.json \
 -e @./group_vars/cluster/[cluster]/ssh-key.yaml \
 --vault-password-file=../resources/vault-password.txt \
 initialize_cluster.yaml
