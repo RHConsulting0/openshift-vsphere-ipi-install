@@ -1,0 +1,93 @@
+---
+apiVersion: v1
+baseDomain: {{ base_domain }}
+metadata:
+  name: {{ cluster_name }}
+{% if compute is defined %}
+compute:
+- hyperthreading: {{ compute.hyperthreading | default('Enabled') }}
+  name: worker
+  replicas: {{ compute.replicas | default(3) }}
+  {% if compute.platform is defined and compute.platform.vsphere is defined %}
+  platform:
+    vsphere:
+      {% if compute.platform.vsphere.cores is defined %}
+      cores: {{ compute.platform.vsphere.cores | default(4) }}
+      {% endif %}
+      {% if compute.platform.vsphere.memory_mb is defined %}
+      memoryMB: {{ compute.platform.vsphere.memory_mb | default(16384) }}
+      {% endif %}
+      {% if compute.platform.vsphere.os_disk is defined %}
+      osDisk:
+        diskSizeGB: {{ compute.platform.vsphere.os_disk.disk_size_gb | default(120) }}
+      {% endif %}
+  {% endif %}
+  {% else %}
+  platform: {}  
+{% endif %}
+{% if control_plane is defined %}
+controlPlane:
+  hyperthreading: {{ control_plane.hyperthreading | default('Enabled') }}
+  name: master
+  replicas: {{ control_plane.replicas | default(3) }}
+  {% if control_plane.platform is defined and control_plane.platform.vsphere is defined %}
+  platform:
+    vsphere:
+      {% if control_plane.platform.vsphere.cores is defined %}
+      cores: {{ control_plane.platform.vsphere.cores | default(4) }}
+      {% endif %}
+      {% if control_plane.platform.vsphere.memory_mb is defined %}
+      memoryMB: {{ control_plane.platform.vsphere.memory_mb | default(16384) }}
+      {% endif %}
+      {% if control_plane.platform.vsphere.os_disk is defined %}
+      osDisk:
+        diskSizeGB: {{ control_plane.platform.vsphere.os_disk.disk_size_gb | default(120) }}
+      {% endif %}
+  {% endif %}
+  {% else %}
+  platform: {}
+{% endif %}
+networking:
+  clusterNetwork:
+  - cidr: {{ networking.cluster_network_cidr | default('10.128.0.0/14') }}
+    hostPrefix: {{ networking.cluster_network_host_prefix | default(23) }}
+  machineNetwork:
+  - cidr: {{ networking.machine_network_cidr | default('10.0.0.0/16') }}
+  {% if networking.network_type is defined %}
+  networkType: {{ networking.network_type | default('OVNKubernetes') }}
+  {% endif %}
+  serviceNetwork:
+  - {{ networking.service_network_cidr | default('172.30.0.0/16') }}
+platform:
+  vsphere:
+    vCenter: {{ platform.vsphere.vcenter_server }}
+    username: {{ platform.vsphere.vcenter_username }}
+    password: {{ platform.vsphere.vcenter_password }}
+    datacenter: {{ platform.vsphere.datacenter }}
+    defaultDatastore: {{ platform.vsphere.default_datastore }}
+    {% if platform.vsphere.folder is defined %}
+    folder: {{ platform.vsphere.folder }}
+    {% endif %}
+    {% if platform.vsphere.cluster is defined %}
+    cluster: {{ platform.vsphere.cluster }}
+    {% endif %}
+    {% if platform.vsphere.api_vip is defined %}
+    apiVIP: {{ platform.vsphere.api_vip }}
+    {% endif %}
+    {% if platform.vsphere.ingress_vip is defined %}
+    ingressVIP: {{ platform.vsphere.ingress_vip }}
+    {% endif %}
+    {% if platform.vsphere.network is defined %}
+    network: {{ platform.vsphere.network }}
+    {% endif %}
+    {% if platform.vsphere.resource_pool is defined %}
+    resourcePool: {{ platform.vsphere.resource_pool }}
+    {% endif %}
+pullSecret: '{{ lookup('file'), pull_secret_file_ | to_json | from_json }}'
+{% if ssh_key is defined %}
+sshKey: '{{ ssh_key }}'
+{% endif %}
+{% if additional_trust_bundle is defined %}
+additionalTrustBundle: |
+  {{ additional_trust_bundle | indent(2) }}
+{% endif %}
