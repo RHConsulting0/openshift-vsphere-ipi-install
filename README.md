@@ -35,9 +35,9 @@
 
 ## Prerequisites for Cluster Installation
 
-These instructions are based on the Installer-provisioned Infrastructure installation procedure.(<https://docs.openshift.com/container-platform/4.10/installing/installing_vsphere/installing-vsphere-installer-provisioned-customizations.html>)
+These instructions are based on the Installer-provisioned Infrastructure installation procedure.(https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/installing_on_vmware_vsphere/installer-provisioned-infrastructure#installing-vsphere-installer-provisioned-customizations)
 
-1. Create an ssh-key pair for your user: <https://docs.openshift.com/container-platform/4.10/installing/installing_vsphere/installing-vsphere-installer-provisioned.html#ssh-agent-using_installing-vsphere-installer-provisioned>
+1. Create an ssh-key pair for your user: <https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/installing_on_vmware_vsphere/installer-provisioned-infrastructure#ssh-agent-using_ipi-vsphere-preparing-to-install>
 
 2. Copy the contents of your ssh-key pub file to the last line, under `sshKey: |` in the following file:
   ansible/roles/initialize_cluster/templates/install-config.yaml.j2
