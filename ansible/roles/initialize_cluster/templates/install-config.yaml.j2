@@ -69,7 +69,7 @@ platform:
 {% endif %}
     clusterOSImage: http://localhost/rhcos-{{ install_config.ocp_install_ver }}-x86_64-vmware.x86_64.ova
 publish: External
-pullSecret: {{ pull_secret }}
+pullSecret: {{ lookup('file'), pull_secret_file | to_json | from_json }}
 sshKey: {{ ssh_pub_key }}
 additionalTrustBundle: |
   -----BEGIN CERTIFICATE-----

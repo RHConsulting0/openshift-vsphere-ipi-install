@@ -56,24 +56,21 @@ Use `ansible/group_vars/cluster/dev/all.yaml` as an example, changing variables 
 
 ## Initialize the Cluster
 
-Ensure you are in the ansible directory before you run these commands
+Run the run.sh script to build the cluster. The script will set up the ansible environment, and run the initialize_cluster.yaml playbook.
+The run.sh script takes two parameters:
+1. The environment (lab, dev, prod)
+2. The cluster name (lab, dev, prod)
+3. The output is redirected to a file called result.out
+4. The script will take about 30-45 minutes to complete.
+5. Make sure you have the resources available in vSphere before running the script.
 
 ```sh
-ansible-playbook -i inventory \
--e @./group_vars/cluster/[cluster]/all.yaml \
--e @./group_vars/env/[env]/default-vault.yaml \
--e @./group_vars/env/[env]/all.yaml \
--e @./group_vars/pull-secret.yaml \
--e @./group_vars/cluster/[cluster]/ssh-key.yaml \
---vault-password-file=../resources/vault-password.txt \
-initialize_cluster.yaml
+# Make sure you are in the openshift-vsphere-ipi-install directory
+cd openshift-vsphere-ipi-install
+# Run the script to build the cluster - Our use case is lab
+. run.sh lab lab > result.out
 ```
 
-**NOTE**: For lab add `-e @./group_vars/env/lab/all.yaml \`
-
-**NOTE**: For Quay clusters replace pull secret line with `-e @./group_vars/quay-pull-secret.yaml \`
-
-**NOTE**: For Mesa installations, environment variable is 'mprod'
 
 ## Before Moving to Next Steps
 
