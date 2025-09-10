@@ -14,6 +14,7 @@ vcenter_cluster:
 install_config_cluster:
   cluster_name: OCP-cluster-name-here
 
+
 vmconfig:
   master:
     cpu: 8
@@ -45,4 +46,5 @@ group_sync_cluster:
 # Optional network policies
 network_policy:
   egress_cidr: "10.#.#.0/24"
+
 

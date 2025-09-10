@@ -5,5 +5,3 @@ ArgoCDRepoDevSvc: IfNecessaryArgoRepSvcPW
 vcenter:
   user: vsphereuname@domain.org
   password: 'vsphere_pw'
-pull_secret_file: /runner/project/secretsars/pull_secret_file.yaml
-pull_secret_file_full: /home/miryan/Documents/projects/odfl/repos/openshift-vsphere-ipi-install/resources/pull-secret.txt

@@ -83,9 +83,13 @@ platform:
     {% if platform.vsphere.resource_pool is defined %}
     resourcePool: {{ platform.vsphere.resource_pool }}
     {% endif %}
-pullSecret: '{{ lookup('file'), pull_secret_file_ | to_json | from_json }}'
+{% if pull_secret is defined %}
+pullSecret: |
+  {{ pull_secret | to_nice_json | indent(2) }}
+{% endif %}  
 {% if ssh_key is defined %}
-sshKey: '{{ ssh_key }}'
+sshKey: |
+  {{ ssh_key | indent(2) }}
 {% endif %}
 {% if additional_trust_bundle is defined %}
 additionalTrustBundle: |

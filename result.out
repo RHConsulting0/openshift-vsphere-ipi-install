@@ -1,357 +1,76 @@
-ansible-playbook [core 2.16.14]
-  config file = /etc/ansible/ansible.cfg
-  configured module search path = ['/home/runner/.ansible/plugins/modules', '/usr/share/ansible/plugins/modules']
-  ansible python module location = /usr/lib/python3.11/site-packages/ansible
-  ansible collection location = /home/runner/.ansible/collections:/usr/share/ansible/collections
-  executable location = /usr/bin/ansible-playbook
-  python version = 3.11.11 (main, Feb 10 2025, 00:00:00) [GCC 11.5.0 20240719 (Red Hat 11.5.0-5)] (/usr/bin/python3.11)
-  jinja version = 3.1.6
-  libyaml = True
-Using /etc/ansible/ansible.cfg as config file
-setting up inventory plugins
-Loading collection ansible.builtin from 
-host_list declined parsing /runner/project/inventory as it did not pass its verify_file() method
-script declined parsing /runner/project/inventory as it did not pass its verify_file() method
-auto declined parsing /runner/project/inventory as it did not pass its verify_file() method
-Trying secret FileVaultSecret(filename='/runner/resources/vault-password.txt') for vault_id=default
-Trying secret FileVaultSecret(filename='/runner/resources/vault-password.txt') for vault_id=default
-Set default localhost to localhost
-Parsed /runner/project/inventory inventory source with yaml plugin
-Loading callback plugin default of type stdout, v2.0 from /usr/lib/python3.11/site-packages/ansible/plugins/callback/default.py
-Skipping callback 'default', as we already have a stdout callback.
-Skipping callback 'minimal', as we already have a stdout callback.
-Skipping callback 'oneline', as we already have a stdout callback.
-
-PLAYBOOK: initialize_cluster.yaml **********************************************
-Positional arguments: /runner/project/initialize_cluster.yaml
-verbosity: 4
-connection: ssh
-become_method: sudo
-tags: ('all',)
-inventory: ('/runner/project/inventory',)
-extra_vars: ('@/runner/project/group_vars/cluster/lab/all.yaml', '@/runner/project/group_vars/env/lab/default-vault.yaml', '@/runner/project/group_vars/env/lab/all.yaml', '@/runner/project/secrets/pull_secret.json', '@/runner/project/group_vars/cluster/lab/ssh-key.yaml')
-vault_password_files: ('/runner/resources/vault-password.txt',)
-forks: 5
-1 plays in /runner/project/initialize_cluster.yaml
-
-PLAY [Get hosts to initialize cluster] *****************************************
-
-TASK [Gathering Facts] *********************************************************
-task path: /runner/project/initialize_cluster.yaml:2
-<localhost> ESTABLISH LOCAL CONNECTION FOR USER: root
-<localhost> EXEC /bin/sh -c 'echo ~root && sleep 0'
-<localhost> EXEC /bin/sh -c '( umask 77 && mkdir -p "` echo /home/runner/.ansible/tmp `"&& mkdir "` echo /home/runner/.ansible/tmp/ansible-tmp-1757366549.6279428-16-58745843690955 `" && echo ansible-tmp-1757366549.6279428-16-58745843690955="` echo /home/runner/.ansible/tmp/ansible-tmp-1757366549.6279428-16-58745843690955 `" ) && sleep 0'
-Using module file /usr/lib/python3.11/site-packages/ansible/modules/setup.py
-<localhost> PUT /home/runner/.ansible/tmp/ansible-local-13fg1cwq80/tmpbpe4nu3u TO /home/runner/.ansible/tmp/ansible-tmp-1757366549.6279428-16-58745843690955/AnsiballZ_setup.py
-<localhost> EXEC /bin/sh -c 'chmod u+x /home/runner/.ansible/tmp/ansible-tmp-1757366549.6279428-16-58745843690955/ /home/runner/.ansible/tmp/ansible-tmp-1757366549.6279428-16-58745843690955/AnsiballZ_setup.py && sleep 0'
-<localhost> EXEC /bin/sh -c '/usr/bin/python3 /home/runner/.ansible/tmp/ansible-tmp-1757366549.6279428-16-58745843690955/AnsiballZ_setup.py && sleep 0'
-<localhost> EXEC /bin/sh -c 'rm -f -r /home/runner/.ansible/tmp/ansible-tmp-1757366549.6279428-16-58745843690955/ > /dev/null 2>&1 && sleep 0'
-ok: [localhost]
-
-TASK [initialize_cluster : Check for openshift-install] ************************
-task path: /runner/project/roles/initialize_cluster/tasks/main.yaml:4
-<localhost> ESTABLISH LOCAL CONNECTION FOR USER: root
-<localhost> EXEC /bin/sh -c 'echo ~root && sleep 0'
-<localhost> EXEC /bin/sh -c '( umask 77 && mkdir -p "` echo /home/runner/.ansible/tmp `"&& mkdir "` echo /home/runner/.ansible/tmp/ansible-tmp-1757366550.2038095-61-257850028152098 `" && echo ansible-tmp-1757366550.2038095-61-257850028152098="` echo /home/runner/.ansible/tmp/ansible-tmp-1757366550.2038095-61-257850028152098 `" ) && sleep 0'
-Using module file /usr/lib/python3.11/site-packages/ansible/modules/stat.py
-<localhost> PUT /home/runner/.ansible/tmp/ansible-local-13fg1cwq80/tmp30c4rn63 TO /home/runner/.ansible/tmp/ansible-tmp-1757366550.2038095-61-257850028152098/AnsiballZ_stat.py
-<localhost> EXEC /bin/sh -c 'chmod u+x /home/runner/.ansible/tmp/ansible-tmp-1757366550.2038095-61-257850028152098/ /home/runner/.ansible/tmp/ansible-tmp-1757366550.2038095-61-257850028152098/AnsiballZ_stat.py && sleep 0'
-<localhost> EXEC /bin/sh -c '/usr/bin/python3 /home/runner/.ansible/tmp/ansible-tmp-1757366550.2038095-61-257850028152098/AnsiballZ_stat.py && sleep 0'
-<localhost> EXEC /bin/sh -c 'rm -f -r /home/runner/.ansible/tmp/ansible-tmp-1757366550.2038095-61-257850028152098/ > /dev/null 2>&1 && sleep 0'
-ok: [localhost] => {
-    "changed": false,
-    "invocation": {
-        "module_args": {
-            "checksum_algorithm": "sha1",
-            "follow": false,
-            "get_attributes": true,
-            "get_checksum": true,
-            "get_mime": true,
-            "path": "/usr/local/bin/openshift-install"
-        }
-    },
-    "stat": {
-        "exists": false
-    }
-}
-
-TASK [initialize_cluster : Fail if ocs_install does not exist] *****************
-task path: /runner/project/roles/initialize_cluster/tasks/main.yaml:9
-skipping: [localhost] => {
-    "changed": false,
-    "false_condition": "ocs_install is not defined",
-    "skip_reason": "Conditional result was False"
-}
-
-TASK [initialize_cluster : Clean up existing install-dir] **********************
-task path: /runner/project/roles/initialize_cluster/tasks/main.yaml:16
-<localhost> ESTABLISH LOCAL CONNECTION FOR USER: root
-<localhost> EXEC /bin/sh -c 'echo ~root && sleep 0'
-<localhost> EXEC /bin/sh -c '( umask 77 && mkdir -p "` echo /home/runner/.ansible/tmp `"&& mkdir "` echo /home/runner/.ansible/tmp/ansible-tmp-1757366550.397496-77-126362583116264 `" && echo ansible-tmp-1757366550.397496-77-126362583116264="` echo /home/runner/.ansible/tmp/ansible-tmp-1757366550.397496-77-126362583116264 `" ) && sleep 0'
-Using module file /usr/lib/python3.11/site-packages/ansible/modules/file.py
-<localhost> PUT /home/runner/.ansible/tmp/ansible-local-13fg1cwq80/tmpul0yh6lr TO /home/runner/.ansible/tmp/ansible-tmp-1757366550.397496-77-126362583116264/AnsiballZ_file.py
-<localhost> EXEC /bin/sh -c 'chmod u+x /home/runner/.ansible/tmp/ansible-tmp-1757366550.397496-77-126362583116264/ /home/runner/.ansible/tmp/ansible-tmp-1757366550.397496-77-126362583116264/AnsiballZ_file.py && sleep 0'
-<localhost> EXEC /bin/sh -c '/usr/bin/python3 /home/runner/.ansible/tmp/ansible-tmp-1757366550.397496-77-126362583116264/AnsiballZ_file.py && sleep 0'
-<localhost> EXEC /bin/sh -c 'rm -f -r /home/runner/.ansible/tmp/ansible-tmp-1757366550.397496-77-126362583116264/ > /dev/null 2>&1 && sleep 0'
-changed: [localhost] => {
-    "changed": true,
-    "diff": {
-        "after": {
-            "path": "/runner/project/install-dir",
-            "state": "absent"
-        },
-        "before": {
-            "path": "/runner/project/install-dir",
-            "path_content": {
-                "directories": [],
-                "files": []
-            },
-            "state": "directory"
-        }
-    },
-    "invocation": {
-        "module_args": {
-            "_diff_peek": null,
-            "_original_basename": null,
-            "access_time": null,
-            "access_time_format": "%Y%m%d%H%M.%S",
-            "attributes": null,
-            "follow": true,
-            "force": false,
-            "group": null,
-            "mode": null,
-            "modification_time": null,
-            "modification_time_format": "%Y%m%d%H%M.%S",
-            "owner": null,
-            "path": "/runner/project/install-dir",
-            "recurse": false,
-            "selevel": null,
-            "serole": null,
-            "setype": null,
-            "seuser": null,
-            "src": null,
-            "state": "absent",
-            "unsafe_writes": false
-        }
-    },
-    "path": "/runner/project/install-dir",
-    "state": "absent"
-}
-
-TASK [initialize_cluster : Create bin, install-dir and downloads folders] ******
-task path: /runner/project/roles/initialize_cluster/tasks/main.yaml:21
-<localhost> ESTABLISH LOCAL CONNECTION FOR USER: root
-<localhost> EXEC /bin/sh -c 'echo ~root && sleep 0'
-<localhost> EXEC /bin/sh -c '( umask 77 && mkdir -p "` echo /home/runner/.ansible/tmp `"&& mkdir "` echo /home/runner/.ansible/tmp/ansible-tmp-1757366550.5853963-92-169956564603807 `" && echo ansible-tmp-1757366550.5853963-92-169956564603807="` echo /home/runner/.ansible/tmp/ansible-tmp-1757366550.5853963-92-169956564603807 `" ) && sleep 0'
-Using module file /usr/lib/python3.11/site-packages/ansible/modules/file.py
-<localhost> PUT /home/runner/.ansible/tmp/ansible-local-13fg1cwq80/tmp1x9fl07o TO /home/runner/.ansible/tmp/ansible-tmp-1757366550.5853963-92-169956564603807/AnsiballZ_file.py
-<localhost> EXEC /bin/sh -c 'chmod u+x /home/runner/.ansible/tmp/ansible-tmp-1757366550.5853963-92-169956564603807/ /home/runner/.ansible/tmp/ansible-tmp-1757366550.5853963-92-169956564603807/AnsiballZ_file.py && sleep 0'
-<localhost> EXEC /bin/sh -c '/usr/bin/python3 /home/runner/.ansible/tmp/ansible-tmp-1757366550.5853963-92-169956564603807/AnsiballZ_file.py && sleep 0'
-<localhost> EXEC /bin/sh -c 'rm -f -r /home/runner/.ansible/tmp/ansible-tmp-1757366550.5853963-92-169956564603807/ > /dev/null 2>&1 && sleep 0'
-changed: [localhost] => {
-    "changed": true,
-    "diff": {
-        "after": {
-            "path": "/runner/project/install-dir",
-            "state": "directory"
-        },
-        "before": {
-            "path": "/runner/project/install-dir",
-            "state": "absent"
-        }
-    },
-    "gid": 0,
-    "group": "root",
-    "invocation": {
-        "module_args": {
-            "_diff_peek": null,
-            "_original_basename": null,
-            "access_time": null,
-            "access_time_format": "%Y%m%d%H%M.%S",
-            "attributes": null,
-            "follow": true,
-            "force": false,
-            "group": null,
-            "mode": "0755",
-            "modification_time": null,
-            "modification_time_format": "%Y%m%d%H%M.%S",
-            "owner": null,
-            "path": "/runner/project/install-dir",
-            "recurse": false,
-            "selevel": null,
-            "serole": null,
-            "setype": null,
-            "seuser": null,
-            "src": null,
-            "state": "directory",
-            "unsafe_writes": false
-        }
-    },
-    "mode": "0755",
-    "owner": "root",
-    "path": "/runner/project/install-dir",
-    "size": 6,
-    "state": "directory",
-    "uid": 0
-}
-
-TASK [initialize_cluster : Create install-config file from template] ***********
-task path: /runner/project/roles/initialize_cluster/tasks/main.yaml:27
-<localhost> ESTABLISH LOCAL CONNECTION FOR USER: root
-<localhost> EXEC /bin/sh -c 'echo ~root && sleep 0'
-<localhost> EXEC /bin/sh -c '( umask 77 && mkdir -p "` echo /home/runner/.ansible/tmp `"&& mkdir "` echo /home/runner/.ansible/tmp/ansible-tmp-1757366550.6958046-107-44440481782434 `" && echo ansible-tmp-1757366550.6958046-107-44440481782434="` echo /home/runner/.ansible/tmp/ansible-tmp-1757366550.6958046-107-44440481782434 `" ) && sleep 0'
-Using module file /usr/lib/python3.11/site-packages/ansible/modules/stat.py
-<localhost> PUT /home/runner/.ansible/tmp/ansible-local-13fg1cwq80/tmpz59sg5tl TO /home/runner/.ansible/tmp/ansible-tmp-1757366550.6958046-107-44440481782434/AnsiballZ_stat.py
-<localhost> EXEC /bin/sh -c 'chmod u+x /home/runner/.ansible/tmp/ansible-tmp-1757366550.6958046-107-44440481782434/ /home/runner/.ansible/tmp/ansible-tmp-1757366550.6958046-107-44440481782434/AnsiballZ_stat.py && sleep 0'
-<localhost> EXEC /bin/sh -c '/usr/bin/python3 /home/runner/.ansible/tmp/ansible-tmp-1757366550.6958046-107-44440481782434/AnsiballZ_stat.py && sleep 0'
-<localhost> PUT /home/runner/.ansible/tmp/ansible-local-13fg1cwq80/tmpox5vi1wi/install-config.yaml.j2 TO /home/runner/.ansible/tmp/ansible-tmp-1757366550.6958046-107-44440481782434/source
-<localhost> EXEC /bin/sh -c 'chmod u+x /home/runner/.ansible/tmp/ansible-tmp-1757366550.6958046-107-44440481782434/ /home/runner/.ansible/tmp/ansible-tmp-1757366550.6958046-107-44440481782434/source && sleep 0'
-Using module file /usr/lib/python3.11/site-packages/ansible/modules/copy.py
-<localhost> PUT /home/runner/.ansible/tmp/ansible-local-13fg1cwq80/tmpp1o0vcvm TO /home/runner/.ansible/tmp/ansible-tmp-1757366550.6958046-107-44440481782434/AnsiballZ_copy.py
-<localhost> EXEC /bin/sh -c 'chmod u+x /home/runner/.ansible/tmp/ansible-tmp-1757366550.6958046-107-44440481782434/ /home/runner/.ansible/tmp/ansible-tmp-1757366550.6958046-107-44440481782434/AnsiballZ_copy.py && sleep 0'
-<localhost> EXEC /bin/sh -c '/usr/bin/python3 /home/runner/.ansible/tmp/ansible-tmp-1757366550.6958046-107-44440481782434/AnsiballZ_copy.py && sleep 0'
-<localhost> EXEC /bin/sh -c 'rm -f -r /home/runner/.ansible/tmp/ansible-tmp-1757366550.6958046-107-44440481782434/ > /dev/null 2>&1 && sleep 0'
-changed: [localhost] => {
-    "changed": true,
-    "checksum": "7842504d7041fb29814e8cef5d3fae84ca4dc3a6",
-    "dest": "/runner/project/install-dir/install-config.yaml",
-    "diff": [],
-    "gid": 0,
-    "group": "root",
-    "invocation": {
-        "module_args": {
-            "_original_basename": "install-config.yaml.j2",
-            "attributes": null,
-            "backup": false,
-            "checksum": "7842504d7041fb29814e8cef5d3fae84ca4dc3a6",
-            "content": null,
-            "dest": "/runner/project/install-dir/install-config.yaml",
-            "directory_mode": null,
-            "follow": false,
-            "force": true,
-            "group": null,
-            "local_follow": null,
-            "mode": "0644",
-            "owner": null,
-            "remote_src": null,
-            "selevel": null,
-            "serole": null,
-            "setype": null,
-            "seuser": null,
-            "src": "/home/runner/.ansible/tmp/ansible-tmp-1757366550.6958046-107-44440481782434/source",
-            "unsafe_writes": false,
-            "validate": null
-        }
-    },
-    "md5sum": "34701b6ce373e66014400d1dcf1790b6",
-    "mode": "0644",
-    "owner": "root",
-    "size": 8164,
-    "src": "/home/runner/.ansible/tmp/ansible-tmp-1757366550.6958046-107-44440481782434/source",
-    "state": "file",
-    "uid": 0
-}
-
-TASK [initialize_cluster : Backup the install-config.yaml file] ****************
-task path: /runner/project/roles/initialize_cluster/tasks/main.yaml:33
-<localhost> ESTABLISH LOCAL CONNECTION FOR USER: root
-<localhost> EXEC /bin/sh -c 'echo ~root && sleep 0'
-<localhost> EXEC /bin/sh -c '( umask 77 && mkdir -p "` echo /home/runner/.ansible/tmp `"&& mkdir "` echo /home/runner/.ansible/tmp/ansible-tmp-1757366550.9712062-128-277521539237518 `" && echo ansible-tmp-1757366550.9712062-128-277521539237518="` echo /home/runner/.ansible/tmp/ansible-tmp-1757366550.9712062-128-277521539237518 `" ) && sleep 0'
-Using module file /usr/lib/python3.11/site-packages/ansible/modules/stat.py
-<localhost> PUT /home/runner/.ansible/tmp/ansible-local-13fg1cwq80/tmp8omd7e3l TO /home/runner/.ansible/tmp/ansible-tmp-1757366550.9712062-128-277521539237518/AnsiballZ_stat.py
-<localhost> EXEC /bin/sh -c 'chmod u+x /home/runner/.ansible/tmp/ansible-tmp-1757366550.9712062-128-277521539237518/ /home/runner/.ansible/tmp/ansible-tmp-1757366550.9712062-128-277521539237518/AnsiballZ_stat.py && sleep 0'
-<localhost> EXEC /bin/sh -c '/usr/bin/python3 /home/runner/.ansible/tmp/ansible-tmp-1757366550.9712062-128-277521539237518/AnsiballZ_stat.py && sleep 0'
-<localhost> PUT /runner/project/install-dir/install-config.yaml TO /home/runner/.ansible/tmp/ansible-tmp-1757366550.9712062-128-277521539237518/source
-<localhost> EXEC /bin/sh -c 'chmod u+x /home/runner/.ansible/tmp/ansible-tmp-1757366550.9712062-128-277521539237518/ /home/runner/.ansible/tmp/ansible-tmp-1757366550.9712062-128-277521539237518/source && sleep 0'
-Using module file /usr/lib/python3.11/site-packages/ansible/modules/copy.py
-<localhost> PUT /home/runner/.ansible/tmp/ansible-local-13fg1cwq80/tmpa4ix0msi TO /home/runner/.ansible/tmp/ansible-tmp-1757366550.9712062-128-277521539237518/AnsiballZ_copy.py
-<localhost> EXEC /bin/sh -c 'chmod u+x /home/runner/.ansible/tmp/ansible-tmp-1757366550.9712062-128-277521539237518/ /home/runner/.ansible/tmp/ansible-tmp-1757366550.9712062-128-277521539237518/AnsiballZ_copy.py && sleep 0'
-<localhost> EXEC /bin/sh -c '/usr/bin/python3 /home/runner/.ansible/tmp/ansible-tmp-1757366550.9712062-128-277521539237518/AnsiballZ_copy.py && sleep 0'
-<localhost> EXEC /bin/sh -c 'rm -f -r /home/runner/.ansible/tmp/ansible-tmp-1757366550.9712062-128-277521539237518/ > /dev/null 2>&1 && sleep 0'
-changed: [localhost] => {
-    "changed": true,
-    "checksum": "7842504d7041fb29814e8cef5d3fae84ca4dc3a6",
-    "dest": "/runner/project/install-dir/install-config.yaml.orig",
-    "diff": [],
-    "gid": 0,
-    "group": "root",
-    "invocation": {
-        "module_args": {
-            "_original_basename": "install-config.yaml",
-            "attributes": null,
-            "backup": false,
-            "checksum": "7842504d7041fb29814e8cef5d3fae84ca4dc3a6",
-            "content": null,
-            "dest": "/runner/project/install-dir/install-config.yaml.orig",
-            "directory_mode": null,
-            "follow": false,
-            "force": true,
-            "group": null,
-            "local_follow": null,
-            "mode": "0664",
-            "owner": null,
-            "remote_src": null,
-            "selevel": null,
-            "serole": null,
-            "setype": null,
-            "seuser": null,
-            "src": "/home/runner/.ansible/tmp/ansible-tmp-1757366550.9712062-128-277521539237518/source",
-            "unsafe_writes": false,
-            "validate": null
-        }
-    },
-    "md5sum": "34701b6ce373e66014400d1dcf1790b6",
-    "mode": "0664",
-    "owner": "root",
-    "size": 8164,
-    "src": "/home/runner/.ansible/tmp/ansible-tmp-1757366550.9712062-128-277521539237518/source",
-    "state": "file",
-    "uid": 0
-}
-
-TASK [initialize_cluster : Initialize IPI Cluster installation] ****************
-task path: /runner/project/roles/initialize_cluster/tasks/main.yaml:39
-<localhost> ESTABLISH LOCAL CONNECTION FOR USER: root
-<localhost> EXEC /bin/sh -c 'echo ~root && sleep 0'
-<localhost> EXEC /bin/sh -c '( umask 77 && mkdir -p "` echo /home/runner/.ansible/tmp `"&& mkdir "` echo /home/runner/.ansible/tmp/ansible-tmp-1757366551.1756487-149-247379636400504 `" && echo ansible-tmp-1757366551.1756487-149-247379636400504="` echo /home/runner/.ansible/tmp/ansible-tmp-1757366551.1756487-149-247379636400504 `" ) && sleep 0'
-Using module file /usr/lib/python3.11/site-packages/ansible/modules/command.py
-<localhost> PUT /home/runner/.ansible/tmp/ansible-local-13fg1cwq80/tmp9bnhlp8h TO /home/runner/.ansible/tmp/ansible-tmp-1757366551.1756487-149-247379636400504/AnsiballZ_command.py
-<localhost> EXEC /bin/sh -c 'chmod u+x /home/runner/.ansible/tmp/ansible-tmp-1757366551.1756487-149-247379636400504/ /home/runner/.ansible/tmp/ansible-tmp-1757366551.1756487-149-247379636400504/AnsiballZ_command.py && sleep 0'
-<localhost> EXEC /bin/sh -c '/usr/bin/python3 /home/runner/.ansible/tmp/ansible-tmp-1757366551.1756487-149-247379636400504/AnsiballZ_command.py && sleep 0'
-<localhost> EXEC /bin/sh -c 'rm -f -r /home/runner/.ansible/tmp/ansible-tmp-1757366551.1756487-149-247379636400504/ > /dev/null 2>&1 && sleep 0'
-The full traceback is:
-  File "/tmp/ansible_ansible.legacy.command_payload_itepswca/ansible_ansible.legacy.command_payload.zip/ansible/module_utils/basic.py", line 2024, in run_command
-    cmd = subprocess.Popen(args, **kwargs)
-  File "/usr/lib64/python3.9/subprocess.py", line 951, in __init__
-    self._execute_child(args, executable, preexec_fn, close_fds,
-  File "/usr/lib64/python3.9/subprocess.py", line 1837, in _execute_child
-    raise child_exception_type(errno_num, err_msg, err_filename)
-fatal: [localhost]: FAILED! => {
-    "changed": false,
-    "cmd": "/usr/local/bin/openshift-install create cluster --dir=/runner/project/install-dir --log-level=warn",
-    "invocation": {
-        "module_args": {
-            "_raw_params": "/usr/local/bin/openshift-install create cluster --dir=/runner/project/install-dir --log-level=warn",
-            "_uses_shell": false,
-            "argv": null,
-            "chdir": null,
-            "creates": null,
-            "executable": null,
-            "expand_argument_vars": true,
-            "removes": null,
-            "stdin": null,
-            "stdin_add_newline": true,
-            "strip_empty_ends": true
-        }
-    },
-    "msg": "[Errno 2] No such file or directory: b'/usr/local/bin/openshift-install'",
-    "rc": 2,
-    "stderr": "",
-    "stderr_lines": [],
-    "stdout": "",
-    "stdout_lines": []
-}
-
-PLAY RECAP *********************************************************************
-localhost                  : ok=6    changed=4    unreachable=0    failed=1    skipped=1    rescued=0    ignored=0   
-
+Podman container starting...
+[0;34mansible-playbook [core 2.16.14][0m
+[0;34m  config file = /etc/ansible/ansible.cfg[0m
+[0;34m  configured module search path = ['/home/runner/.ansible/plugins/modules', '/usr/share/ansible/plugins/modules'][0m
+[0;34m  ansible python module location = /usr/lib/python3.11/site-packages/ansible[0m
+[0;34m  ansible collection location = /home/runner/.ansible/collections:/usr/share/ansible/collections[0m
+[0;34m  executable location = /usr/bin/ansible-playbook[0m
+[0;34m  python version = 3.11.11 (main, Feb 10 2025, 00:00:00) [GCC 11.5.0 20240719 (Red Hat 11.5.0-5)] (/usr/bin/python3.11)[0m
+[0;34m  jinja version = 3.1.6[0m
+[0;34m  libyaml = True[0m
+[0;34mUsing /etc/ansible/ansible.cfg as config file[0m
+[0;34msetting up inventory plugins[0m
+[0;34mLoading collection ansible.builtin from [0m
+[0;34mhost_list declined parsing /runner/project/inventory.yml as it did not pass its verify_file() method[0m
+[0;34mscript declined parsing /runner/project/inventory.yml as it did not pass its verify_file() method[0m
+[0;34mUsing inventory plugin 'yaml' to process inventory source '/runner/project/inventory.yml'[0m
+[0;34mTrying secret FileVaultSecret(filename='/runner/resources/vault-password.txt') for vault_id=default[0m
+[0;34mtoml declined parsing /runner/project/inventory.yml as it did not pass its verify_file() method[0m
+[1;35m[WARNING]:  * Failed to parse /runner/project/inventory.yml with auto plugin: Unable to retrieve file contents Could not find or access[0m
+[1;35m'/runner/project/secrets/lab/id_ed25519.pub' on the Ansible Controller. If you are using a module and expect the file to exist on the remote, see the remote_src option[0m
+[0;34m  File "/usr/lib/python3.11/site-packages/ansible/inventory/manager.py", line 293, in parse_source[0m
+[0;34m    plugin.parse(self._inventory, self._loader, source, cache=cache)[0m
+[0;34m  File "/usr/lib/python3.11/site-packages/ansible/plugins/inventory/auto.py", line 59, in parse[0m
+[0;34m    plugin.parse(inventory, loader, path, cache=cache)[0m
+[0;34m  File "/usr/lib/python3.11/site-packages/ansible/plugins/inventory/yaml.py", line 101, in parse[0m
+[0;34m    super(InventoryModule, self).parse(inventory, loader, path)[0m
+[0;34m  File "/usr/lib/python3.11/site-packages/ansible/plugins/inventory/__init__.py", line 187, in parse[0m
+[0;34m    self._vars = load_extra_vars(loader)[0m
+[0;34m                 ^^^^^^^^^^^^^^^^^^^^^^^[0m
+[0;34m  File "/usr/lib/python3.11/site-packages/ansible/utils/vars.py", line 197, in load_extra_vars[0m
+[0;34m    data = loader.load_from_file(extra_vars_opt[1:])[0m
+[0;34m           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[0;34m  File "/usr/lib/python3.11/site-packages/ansible/parsing/dataloader.py", line 94, in load_from_file[0m
+[0;34m    (b_file_data, show_content) = self._get_file_contents(file_name)[0m
+[0;34m                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[0;34m  File "/usr/lib/python3.11/site-packages/ansible/parsing/dataloader.py", line 162, in _get_file_contents[0m
+[0;34m    raise AnsibleFileNotFound("Unable to retrieve file contents", file_name=file_name)[0m
+[1;35m[WARNING]:  * Failed to parse /runner/project/inventory.yml with yaml plugin: Unable to retrieve file contents Could not find or access[0m
+[1;35m'/runner/project/secrets/lab/id_ed25519.pub' on the Ansible Controller. If you are using a module and expect the file to exist on the remote, see the remote_src option[0m
+[0;34m  File "/usr/lib/python3.11/site-packages/ansible/inventory/manager.py", line 293, in parse_source[0m
+[0;34m    plugin.parse(self._inventory, self._loader, source, cache=cache)[0m
+[0;34m  File "/usr/lib/python3.11/site-packages/ansible/plugins/inventory/yaml.py", line 101, in parse[0m
+[0;34m    super(InventoryModule, self).parse(inventory, loader, path)[0m
+[0;34m  File "/usr/lib/python3.11/site-packages/ansible/plugins/inventory/__init__.py", line 187, in parse[0m
+[0;34m    self._vars = load_extra_vars(loader)[0m
+[0;34m                 ^^^^^^^^^^^^^^^^^^^^^^^[0m
+[0;34m  File "/usr/lib/python3.11/site-packages/ansible/utils/vars.py", line 197, in load_extra_vars[0m
+[0;34m    data = loader.load_from_file(extra_vars_opt[1:])[0m
+[0;34m           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[0;34m  File "/usr/lib/python3.11/site-packages/ansible/parsing/dataloader.py", line 94, in load_from_file[0m
+[0;34m    (b_file_data, show_content) = self._get_file_contents(file_name)[0m
+[0;34m                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[0;34m  File "/usr/lib/python3.11/site-packages/ansible/parsing/dataloader.py", line 162, in _get_file_contents[0m
+[0;34m    raise AnsibleFileNotFound("Unable to retrieve file contents", file_name=file_name)[0m
+[1;35m[WARNING]:  * Failed to parse /runner/project/inventory.yml with ini plugin: Unable to retrieve file contents Could not find or access[0m
+[1;35m'/runner/project/secrets/lab/id_ed25519.pub' on the Ansible Controller. If you are using a module and expect the file to exist on the remote, see the remote_src option[0m
+[0;34m  File "/usr/lib/python3.11/site-packages/ansible/inventory/manager.py", line 293, in parse_source[0m
+[0;34m    plugin.parse(self._inventory, self._loader, source, cache=cache)[0m
+[0;34m  File "/usr/lib/python3.11/site-packages/ansible/plugins/inventory/ini.py", line 106, in parse[0m
+[0;34m    super(InventoryModule, self).parse(inventory, loader, path)[0m
+[0;34m  File "/usr/lib/python3.11/site-packages/ansible/plugins/inventory/__init__.py", line 187, in parse[0m
+[0;34m    self._vars = load_extra_vars(loader)[0m
+[0;34m                 ^^^^^^^^^^^^^^^^^^^^^^^[0m
+[0;34m  File "/usr/lib/python3.11/site-packages/ansible/utils/vars.py", line 197, in load_extra_vars[0m
+[0;34m    data = loader.load_from_file(extra_vars_opt[1:])[0m
+[0;34m           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[0;34m  File "/usr/lib/python3.11/site-packages/ansible/parsing/dataloader.py", line 94, in load_from_file[0m
+[0;34m    (b_file_data, show_content) = self._get_file_contents(file_name)[0m
+[0;34m                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[0;34m  File "/usr/lib/python3.11/site-packages/ansible/parsing/dataloader.py", line 162, in _get_file_contents[0m
+[0;34m    raise AnsibleFileNotFound("Unable to retrieve file contents", file_name=file_name)[0m
+[1;35m[WARNING]: Unable to parse /runner/project/inventory.yml as an inventory source[0m
+[1;35m[WARNING]: No inventory was parsed, only implicit localhost is available[0m
+[0;31mERROR! Unable to retrieve file contents[0m
+[0;31mCould not find or access '/runner/project/secrets/lab/id_ed25519.pub' on the Ansible Controller.[0m
+[0;31mIf you are using a module and expect the file to exist on the remote, see the remote_src option[0m

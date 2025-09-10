@@ -1,0 +1,15 @@
+plugin: yaml
+groups:
+  all:
+    hosts:
+      localhost:
+        ansible_connection: local
+    vars:
+      ansible_python_interpreter: /usr/bin/python3
+    children:
+      webservers:
+        hosts:
+          localhost:
+      registries:
+        hosts:
+          localhost:

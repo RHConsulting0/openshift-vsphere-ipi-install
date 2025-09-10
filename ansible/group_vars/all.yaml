@@ -7,6 +7,10 @@ catalog_dir: "{{ playbook_dir }}/kustomize-dir"
 chrony_server_list:
   - 10.1.7.125
 
+# OpenShift installer settings
+openshift_install:
+  log_level: debug                       #  (e.g. "debug | info | warn | error") (default "info")
+
 install_config:
   ocp_install_ver: 4.12.3
   base_domain: base_domain.org
