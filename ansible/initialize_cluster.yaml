@@ -5,7 +5,6 @@
   become: false
 
   tasks:
-
-  - name: Install cluster
-    ansible.builtin.import_role:
-      name: initialize_cluster
+    - name: Install cluster
+      ansible.builtin.import_role:
+        name: initialize_cluster

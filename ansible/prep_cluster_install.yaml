@@ -1,0 +1,11 @@
+---
+- name: Prepare to execute initialize cluster
+  hosts: localhost
+  gather_facts: true
+  become: false
+
+  tasks:
+    - name: Prep for cluster installation
+      ansible.builtin.import_role:
+        name: prep_cluster_install
+        

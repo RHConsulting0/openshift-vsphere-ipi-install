@@ -1,6 +1,11 @@
 cluster: "lab"
 cluster_abr: "LAB"
 
+pull_secret_json_file: "/runner/resources/pull-secret.json"
+pull_secret_yaml_file: "/runner/project/secrets/lab/pull-secret.yaml"
+vault_password_file: "/runner/resources/vault-password.txt"   # adjust as needed
+
+
 vcenter_cluster:
   # vm is a hidden element in the below path and is required to work
   folder_path: "/VCenter/Folder/vm/Path/"

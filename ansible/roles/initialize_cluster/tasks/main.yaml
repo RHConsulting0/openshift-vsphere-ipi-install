@@ -1,5 +1,5 @@
 ---
-- name: Ensure openshift-install exists on host with version 4.10
+- name: Ensure openshift-install exists on host with version 4.18
   block:
     - name: Check for openshift-install
       ansible.builtin.stat:
@@ -45,7 +45,7 @@
   block:
     - name: Include and decrypt SSH public key
       include_vars:
-        file: "{{ playbook_dir }}/ansible/secrets/lab/id_ed25519.pub"
+        file: "{{ playbook_dir }}/ansible/secrets/lab/id_ed25519_odfl.pub"
         name: ssh_key
     - name: Trim SSH key
       set_fact:
@@ -54,7 +54,7 @@
       assert:
         that:
           - ssh_key.startswith("ssh-ed25519")
-        fail_msg: "Error: SSH key in id_ed25519.pub does not start with 'ssh-ed25519'."
+        fail_msg: "Error: SSH key in id_ed25519_odfl.pub does not start with 'ssh-ed25519'."
 
 - name: Create install-config file from template
   ansible.builtin.template:

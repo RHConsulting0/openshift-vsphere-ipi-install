@@ -1,0 +1,59 @@
+---
+- name: Prepare the pull-secret
+  block:
+    - name: Check for secrets directory
+      ansible.builtin.stat:
+        path: "/runner/project/secrets"
+      register: ocp_secrets
+
+    - name: Fail if ocp_secrets does not exist
+      ansible.builtin.fail:
+        msg:
+          - "secrets directory does not exist"
+          - "Please resolve the missing directory and contents"
+      when: ocp_secrets is not defined
+
+- name: Read pull-secret.json (plain text)
+  ansible.builtin.slurp:
+    src: "{{ pull_secret_json_file }}"
+  register: pull_secret_raw
+
+- name: Print the raw pull-secret content for debugging
+  ansible.builtin.debug:
+    var: pull_secret_raw
+  when: pull_secret_raw is defined
+
+- name: Parse pull-secret.json content as JSON (decode)
+  ansible.builtin.set_fact:
+    pull_secret_data: "{{ pull_secret_raw.content | b64decode }}"
+
+- name: Print the decoded pull-secret content for debugging
+  ansible.builtin.debug:
+    var: pull_secret_data
+  when: pull_secret_data is defined
+
+- name: Write pull_secret_yaml directly
+  ansible.builtin.copy:
+    dest: "{{ pull_secret_yaml_file }}"
+    content: "{{ pull_secret_data }}"
+    mode: '0600'
+
+- name: Print the pull-secret dictionary for debugging
+  ansible.builtin.debug:
+    var: pull_secret_yaml
+  when: pull_secret_yaml_file is defined
+
+- name: Encrypt pull-secret.yaml with ansible-vault
+  ansible.builtin.command:
+    cmd: >
+      ansible-vault encrypt {{ pull_secret_yaml_file }} --vault-password-file {{ vault_password_file }}
+  register: encrypt_result
+  changed_when: encrypt_result.rc == 0
+
+- name: Print confirmation of pull-secret.yaml encryption
+  ansible.builtin.debug:
+    msg: "Pull-secret.yaml has been encrypted with ansible-vault."
+  when: pull_secret_yaml_file is defined
+
+
+

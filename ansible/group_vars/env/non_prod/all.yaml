@@ -12,3 +12,4 @@ group_sync_env:
 # Only if argocd is used
 argocd:
   dev_repo_url: https://argocd-dev.domain.org
+

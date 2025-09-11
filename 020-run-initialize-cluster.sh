@@ -1,12 +1,15 @@
 #!/bin/bash
 
+#. 020-run-initialize-cluster.sh <cluster> <env>
+# Example: . 020-run-initialize-cluster.sh lab lab  
+CLUSTER=$1
+ENV=$2
+
+
+# Project and Ansible directories
 PROJECT_DIR="/home/miryan/Documents/projects/odfl/repos/openshift-vsphere-ipi-install"
 ANSIBLE_DIR="ansible"
 
-# Usage: ./run.sh <cluster> <env>
-# Example: ./run.sh lab lab
-CLUSTER=$1
-ENV=$2
 
 # cd $PROJECT_DIR
 # printf "Current directory is: [%s]\n" $PROJECT_DIR
