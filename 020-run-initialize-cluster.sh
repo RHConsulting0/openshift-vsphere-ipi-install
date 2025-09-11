@@ -67,8 +67,7 @@ podman run --rm -it \
     -e @/runner/project/group_vars/cluster/${CLUSTER}/all.yaml \
     -e @/runner/project/group_vars/env/${ENV}/default-vault.yaml \
     -e @/runner/project/group_vars/env/${ENV}/all.yaml \
-    -e @/runner/project/secrets/${CLUSTER}/pull-secret.json \
-    -e @/runner/project/secrets/${CLUSTER}/id_ed25519.pub \
+    -e @/runner/project/secrets/${CLUSTER}/secrets.yaml \
     --vault-password-file=/runner/resources/vault-password.txt \
     /runner/project/initialize_cluster.yaml -vvvv
 

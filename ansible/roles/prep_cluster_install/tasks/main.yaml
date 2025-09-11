@@ -18,42 +18,55 @@
     src: "{{ pull_secret_json_file }}"
   register: pull_secret_raw
 
+- name: Read the SSH public key file
+  ansible.builtin.slurp:
+    src: "{{ ssh_pub_file }}"
+  register: ssh_pub
+
 - name: Print the raw pull-secret content for debugging
   ansible.builtin.debug:
     var: pull_secret_raw
   when: pull_secret_raw is defined
 
-- name: Parse pull-secret.json content as JSON (decode)
-  ansible.builtin.set_fact:
-    pull_secret_data: "{{ pull_secret_raw.content | b64decode }}"
+- name: Build combined YAML content (pullSecret + sshKey)
+  set_fact:
+    combined_yaml: |
+      pullSecret: |
+        {{ pull_secret_raw.content | b64decode }}
+      sshKey: "{{ ssh_pub.content | b64decode | trim }}"
 
-- name: Print the decoded pull-secret content for debugging
+- name: Debug - show combined YAML length
   ansible.builtin.debug:
-    var: pull_secret_data
-  when: pull_secret_data is defined
+    msg: "Combined YAML length: {{ combined_yaml | length }} characters"
 
-- name: Write pull_secret_yaml directly
+- name: Write secrets_yaml_file directly (plaintext temporarily)
   ansible.builtin.copy:
-    dest: "{{ pull_secret_yaml_file }}"
-    content: "{{ pull_secret_data }}"
+    dest: "{{ secrets_yaml_file }}"
+    content: "{{ combined_yaml }}"
     mode: '0600'
 
-- name: Print the pull-secret dictionary for debugging
-  ansible.builtin.debug:
-    var: pull_secret_yaml
-  when: pull_secret_yaml_file is defined
+- name: Debug - confirm file written
+  ansible.builtin.stat:
+    path: "{{ secrets_yaml_file }}"
+  register: file_stat
 
-- name: Encrypt pull-secret.yaml with ansible-vault
+- name: Debug - file size
+  ansible.builtin.debug:
+    msg: "Plaintext YAML file size: {{ file_stat.stat.size }} bytes"
+
+- name: Encrypt secrets_yaml_file with Ansible Vault and remove plaintext after
   ansible.builtin.command:
     cmd: >
-      ansible-vault encrypt {{ pull_secret_yaml_file }} --vault-password-file {{ vault_password_file }}
+      ansible-vault encrypt {{ secrets_yaml_file }} --vault-password-file {{ vault_password_file }}
+  args:
+    removes: "{{ secrets_yaml_file }}"
   register: encrypt_result
   changed_when: encrypt_result.rc == 0
 
-- name: Print confirmation of pull-secret.yaml encryption
+- name: Print confirmation of secrets.yaml encryption
   ansible.builtin.debug:
-    msg: "Pull-secret.yaml has been encrypted with ansible-vault."
-  when: pull_secret_yaml_file is defined
+    msg: "secrets.yaml has been encrypted with ansible-vault."
+  when: secrets_yaml_file is defined
 
 
 
