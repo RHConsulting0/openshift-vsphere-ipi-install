@@ -1,10 +1,13 @@
 .vscode*
+.vscode/settings.json
 */.openshift_install.log
 **/openshift-install
 resources/certs
 resources/openshift-installer-4.10
 ansible/install-dir
-#Sansible/kustomize-dir/groups-role-bindings/
-#ansible/kustomize-dir/ldapcron/
-#ansible/kustomize-dir/oauth/
 ansible.orig
+init-playbook*.json
+tests/*.json
+*.log
+context/*
+.vault_pass

@@ -8,6 +8,7 @@ openshift_install:
 # secrets and keys
 pull_secret_json_file: "/runner/resources/pull-secret.json"
 ssh_pub_file: "/runner/project/secrets/lab/id_ed25519_odfl.pub"
+secrets_lab_dir: "/runner/project/secrets/lab"
 secrets_yaml_file: "/runner/project/secrets/lab/secrets.yaml"
 vault_password_file: "/runner/resources/vault-password.txt"   # adjust as needed
 secrets: "{{ lookup ('file', secrets_yaml_file) | from_yaml }}"
@@ -25,7 +26,6 @@ vcenter_cluster:
 
 install_config_cluster:
   cluster_name: OCP-cluster-name-here
-
 
 vmconfig:
   master:

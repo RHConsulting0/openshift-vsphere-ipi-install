@@ -1,0 +1,66 @@
+version: 3
+
+images:
+  base_image:
+    name: registry.access.redhat.com/ubi9/python-312:latest
+#    name: registry.redhat.io/ansible-automation-platform-25/ee-supported-rhel9:latest
+
+options:
+  package_manager_path: /usr/bin/dnf
+
+dependencies:
+  ansible_core:
+    package_pip: ansible-core
+  ansible_runner:
+    package_pip: ansible-runner
+  galaxy: requirements.yaml
+  python:  # any python libs your playbooks need
+    - openshift
+    - kubernetes
+    - pyyaml
+    - python-gitlab
+  system:  # any RHEL packages your playbooks need
+    - tar
+    - gzip
+    - wget
+  exclude:
+    system:
+      - openshift-clients
+
+additional_build_steps:
+  append_builder: []
+  append_final: |
+    ENV HELM_VERSION=v3.16.3
+    ENV KUSTOMIZE_VERSION=v5.5.0 
+    ENV POLICYGENERRATOR_VERSION=v1.15.0
+    ENV OCP_VERSION=4.18.23
+    ENV ARCH=amd64
+    ENV INSTALLER_URL=https://mirror.openshift.com/pub/openshift-v4/clients/ocp/${OCP_VERSION}/openshift-install-linux.tar.gz
+    ENV CLIENT_URL=https://mirror.openshift.com/pub/openshift-v4/clients/ocp/${OCP_VERSION}/openshift-client-linux-${ARCH}-rhel9.tar.gz
+    ENV HELM_URL=https://get.helm.sh/helm-${HELM_VERSION}-linux-amd64.tar.gz
+    ENV POLICY_GENERATOR_URL=https://github.com/open-cluster-management-io/policy-generator-plugin/releases/download/${POLICYGENERRATOR_VERSION}/linux-amd64-PolicyGenerator
+    ENV KUSTOMIZE_URL=https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2F${KUSTOMIZE_VERSION}/kustomize_${KUSTOMIZE_VERSION}_linux_amd64.tar.gz
+    ENV KUSTOMIZE_PLUGIN_HOME=/kustomize-plugins
+    RUN mkdir -p /kustomize-plugins/policy.open-cluster-management.io/v1/policygenerator && \
+        wget -O /tmp/openshift-install.tar.gz "${INSTALLER_URL}" && \
+        wget -O /tmp/openshift-client.tar.gz "${CLIENT_URL}"  && \
+        wget -O /tmp/helm.tar.gz "${HELM_URL}" && \
+        wget -O /tmp/kustomize.tar.gz "${KUSTOMIZE_URL}" && \
+        wget -O /kustomize-plugins/policy.open-cluster-management.io/v1/policygenerator/PolicyGenerator "${POLICY_GENERATOR_URL}" && \
+        tar -C /usr/local/bin -xzf /tmp/openshift-install.tar.gz openshift-install && \
+        tar -C /usr/local/bin -xzf /tmp/openshift-client.tar.gz oc kubectl && \
+        tar -C /tmp -xzf /tmp/helm.tar.gz && \
+        mv /tmp/linux-amd64/helm /usr/local/bin/helm && \
+        tar -C /usr/local/bin -xzf /tmp/kustomize.tar.gz && \
+        chmod +x /usr/local/bin/openshift-install /usr/local/bin/oc /usr/local/bin/kubectl /usr/local/bin/helm /usr/local/bin/kustomize /kustomize-plugins/policy.open-cluster-management.io/v1/policygenerator/PolicyGenerator && \
+        rm -f /tmp/*.tar.gz
+    RUN openshift-install version && \
+      oc version --client && \
+      kubectl version --client && \
+      ansible --version && \
+      ansible-playbook --version && \
+      ansible-vault --version && \
+      helm version && \
+      kustomize version && \
+      /kustomize-plugins/policy.open-cluster-management.io/v1/policygenerator/PolicyGenerator --version && \
+      printf "\n=== Ansible execution environment build complete ===\n"

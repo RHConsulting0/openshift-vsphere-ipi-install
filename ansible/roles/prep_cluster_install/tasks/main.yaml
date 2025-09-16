@@ -39,11 +39,25 @@
   ansible.builtin.debug:
     msg: "Combined YAML length: {{ combined_yaml | length }} characters"
 
+- name: Ensure target directory exists and is writable by a specific user
+  ansible.builtin.file:
+    path: "{{ secrets_lab_dir }}"
+    state: directory
+    owner: "root"
+    mode: '0755'
+  become: false
+
+# - name: Set permissions on the secrets file
+#   ansible.builtin.file:
+#     path: "{{ secrets_yaml_file }}"
+#     mode: '0644' # Owner can read and write, others can only read
+#   become: false
+
 - name: Write secrets_yaml_file directly (plaintext temporarily)
   ansible.builtin.copy:
     dest: "{{ secrets_yaml_file }}"
     content: "{{ combined_yaml }}"
-    mode: '0600'
+    mode: '0644'
 
 - name: Debug - confirm file written
   ansible.builtin.stat:
@@ -67,6 +81,3 @@
   ansible.builtin.debug:
     msg: "secrets.yaml has been encrypted with ansible-vault."
   when: secrets_yaml_file is defined
-
-
-

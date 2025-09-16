@@ -1,4 +1,5 @@
 ---
+# kubernetes cat bundle  
 K8S_AUTH_SSL_CA_CERT: /etc/ssl/certs/ca-bundle.crt
 
 # Used for ldap and API cert configs
@@ -12,7 +13,7 @@ openshift_install:
   log_level: debug                       #  (e.g. "debug | info | warn | error") (default "info")
 
 install_config:
-  ocp_install_ver: 4.12.3
+  ocp_install_ver: 4.18.23
   base_domain: base_domain.org
   # Change IP's per customer
   network:
