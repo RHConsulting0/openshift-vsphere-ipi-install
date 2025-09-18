@@ -16,7 +16,7 @@ ENV=$2
 # Container execution environment
 # This script creates the secrets Ansible Vault      
 #EXECUTION_CONTAINER="registry.redhat.io/ansible-automation-platform-25/ee-supported-rhel9:latest"
-EXECUTION_CONTAINER="ocp-provision-ee:latest"
+EXECUTION_CONTAINER="localhost/ocp-provision-ee:latest"
 
 # Project and Ansible directories
 PROJECT_DIR="/home/miryan/Documents/projects/odfl/repos/openshift-vsphere-ipi-install"
@@ -25,6 +25,9 @@ ANSIBLE_DIR="ansible"
 # Run the Ansible playbook in a container
 printf "Podman container starting...\n"
 podman run --rm \
+  -u $(id -u):$(id -g) \
+  -v $PROJECT_DIR/$ANSIBLE_DIR/tmpdir:/runner/project/tmpdir:Z \
+  -v $PROJECT_DIR/$ANSIBLE_DIR/ansible-logs:/runner/project/ansible-logs:Z \
   -v $PROJECT_DIR/$ANSIBLE_DIR:/runner/project:Z \
   -v $PROJECT_DIR/resources:/runner/resources:Z \
   -v $PROJECT_DIR/$ANSIBLE_DIR/secrets/lab:/runner/project/secrets/lab:Z \
@@ -37,6 +40,6 @@ podman run --rm \
     -e @/runner/resources/pull-secret.json \
     -e @/runner/project/secrets/${CLUSTER}/pull-secret.json \
     --vault-password-file=/runner/resources/vault-password.txt \
-    /runner/project/prep_cluster_install.yaml -vvvv
+    /runner/project/prep_cluster_install.yaml -vvv
 
 

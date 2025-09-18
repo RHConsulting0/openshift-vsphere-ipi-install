@@ -1,4 +1,31 @@
 ---
+- name: Get user information
+  ansible.builtin.setup:
+    filter: ansible_user*
+
+- name: Debug current user context
+  ansible.builtin.debug:
+    msg:
+      - "Current user: {{ ansible_user_id }}"
+      - "Current group: {{ ansible_user_gid }}"
+
+- name: Confirm the tmpdir
+  block:
+
+
+    - name: Check for tmpdir directory
+      ansible.builtin.stat:
+        path: "/runner/project/tmpdir"
+      register: tmpdir
+
+    - name: Fail if tmpdir does not exist
+      ansible.builtin.fail:
+        msg:
+          - "tmpdir directory does not exist"
+          - "Please resolve the missing directory and contents"
+      when: tmpdir is not defined
+
+
 - name: Prepare the pull-secret
   block:
     - name: Check for secrets directory
@@ -39,24 +66,42 @@
   ansible.builtin.debug:
     msg: "Combined YAML length: {{ combined_yaml | length }} characters"
 
-- name: Ensure target directory exists and is writable by a specific user
+- name: Check current permissions for {{ secrets_lab_dir }}
+  ansible.builtin.stat:
+    path: "{{ secrets_lab_dir }}"
+  register: file_stat
+
+- name: Debug permissions for {{ secrets_lab_dir }}
+  ansible.builtin.debug:
+    msg: "Current permissions: {{ file_stat.stat.mode }}, Owner: {{ file_stat.stat.uid }}, Group: {{ file_stat.stat.gid }}"
+
+- name: Ensure target directory exists and is writable
   ansible.builtin.file:
     path: "{{ secrets_lab_dir }}"
     state: directory
-    owner: "root"
-    mode: '0755'
+    mode: '0775'
+    # # Don't set owner - let it inherit from current user/container
   become: false
 
-# - name: Set permissions on the secrets file
-#   ansible.builtin.file:
-#     path: "{{ secrets_yaml_file }}"
-#     mode: '0644' # Owner can read and write, others can only read
-#   become: false
+# - name: Stat the file first
+#   ansible.builtin.stat:
+#     path: /host/mount/target.conf
+#   register: target_stat
+#   ignore_errors: yes
+
+# - name: Write template with same ownership
+#   ansible.builtin.template:
+#     src: mytemplate.j2
+#     dest: /host/mount/target.conf
+#     owner: "{{ target_stat.stat.pw_name | default(omit) }}"
+#     group: "{{ target_stat.stat.gr_name | default(omit) }}"
+#     mode: "{{ target_stat.stat.mode | default('0644') }}"
 
 - name: Write secrets_yaml_file directly (plaintext temporarily)
   ansible.builtin.copy:
     dest: "{{ secrets_yaml_file }}"
     content: "{{ combined_yaml }}"
+    owner: "{{ ansible_user_id }}"
     mode: '0644'
 
 - name: Debug - confirm file written

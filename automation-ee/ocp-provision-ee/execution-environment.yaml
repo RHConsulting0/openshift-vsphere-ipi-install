@@ -1,34 +1,47 @@
+---
 version: 3
 
-images:
-  base_image:
-    name: registry.access.redhat.com/ubi9/python-312:latest
-#    name: registry.redhat.io/ansible-automation-platform-25/ee-supported-rhel9:latest
-
-options:
-  package_manager_path: /usr/bin/dnf
+build_arg_defaults:
+  ANSIBLE_GALAXY_CLI_COLLECTION_OPTS: '--upgrade'
 
 dependencies:
-  ansible_core:
-    package_pip: ansible-core
-  ansible_runner:
-    package_pip: ansible-runner
-  galaxy: requirements.yaml
-  python:  # any python libs your playbooks need
+  python_interpreter:
+    python_path: /usr/bin/python3.11
+  galaxy:
+    collections:
+      - name: kubernetes.core
+      - name: community.hashi_vault
+      - name: community.general
+      - name: ansible.scm
+  python:
+    - selinux
+    - dnspython
+    - psutil
+    - netaddr
     - openshift
     - kubernetes
     - pyyaml
     - python-gitlab
-  system:  # any RHEL packages your playbooks need
-    - tar
-    - gzip
-    - wget
-  exclude:
-    system:
-      - openshift-clients
+  system:
+    - findutils [platform:rpm]
+    - systemd-devel [platform:rpm]
+    - python3.11-devel [platform:rpm]
+    - gcc [platform:rpm]
+
+images:
+  base_image:
+    name: registry.redhat.io/ansible-automation-platform-25/ee-supported-rhel9:latest
+
+additional_build_files:
+  - src: /etc/ansible/ansible.cfg
+    dest: configs
 
 additional_build_steps:
-  append_builder: []
+  prepend_galaxy:
+    - ADD _build/configs/ansible.cfg ${HOME}/.ansible.cfg
+  prepend_builder: |
+    RUN mkdir -p /runner/project/tmpdir && chmod 777 /runner/project/tmpdir && \
+        mkdir -p /runner/project/ansible-logs && chmod 777 /runner/project/ansible-logs
   append_final: |
     ENV HELM_VERSION=v3.16.3
     ENV KUSTOMIZE_VERSION=v5.5.0 
@@ -42,11 +55,11 @@ additional_build_steps:
     ENV KUSTOMIZE_URL=https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2F${KUSTOMIZE_VERSION}/kustomize_${KUSTOMIZE_VERSION}_linux_amd64.tar.gz
     ENV KUSTOMIZE_PLUGIN_HOME=/kustomize-plugins
     RUN mkdir -p /kustomize-plugins/policy.open-cluster-management.io/v1/policygenerator && \
-        wget -O /tmp/openshift-install.tar.gz "${INSTALLER_URL}" && \
-        wget -O /tmp/openshift-client.tar.gz "${CLIENT_URL}"  && \
-        wget -O /tmp/helm.tar.gz "${HELM_URL}" && \
-        wget -O /tmp/kustomize.tar.gz "${KUSTOMIZE_URL}" && \
-        wget -O /kustomize-plugins/policy.open-cluster-management.io/v1/policygenerator/PolicyGenerator "${POLICY_GENERATOR_URL}" && \
+        curl -Lk -o /tmp/openshift-install.tar.gz "${INSTALLER_URL}" && \
+        curl -Lk -o /tmp/openshift-client.tar.gz "${CLIENT_URL}"  && \
+        curl -Lk -o /tmp/helm.tar.gz "${HELM_URL}" && \
+        curl -Lk -o /tmp/kustomize.tar.gz "${KUSTOMIZE_URL}" && \
+        curl -Lk -o /kustomize-plugins/policy.open-cluster-management.io/v1/policygenerator/PolicyGenerator "${POLICY_GENERATOR_URL}" && \
         tar -C /usr/local/bin -xzf /tmp/openshift-install.tar.gz openshift-install && \
         tar -C /usr/local/bin -xzf /tmp/openshift-client.tar.gz oc kubectl && \
         tar -C /tmp -xzf /tmp/helm.tar.gz && \
@@ -64,3 +77,7 @@ additional_build_steps:
       kustomize version && \
       /kustomize-plugins/policy.open-cluster-management.io/v1/policygenerator/PolicyGenerator --version && \
       printf "\n=== Ansible execution environment build complete ===\n"
+
+options:
+  package_manager_path: /usr/bin/microdnf
+

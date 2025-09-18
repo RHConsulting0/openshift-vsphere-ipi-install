@@ -2,6 +2,7 @@
 
 - [Cluster Installation Instructions](#cluster-installation-instructions)
   - [Prerequisites for Cluster Installation](#prerequisites-for-cluster-installation)
+  - [Initialize the Cluster](#initialize-the-cluster)
   - [Before Moving to Next Steps](#before-moving-to-next-steps)
   - [General instructions](#general-instructions)
     - [All Plays in One](#all-plays-in-one)
@@ -38,24 +39,37 @@ These instructions are based on the Installer-provisioned Infrastructure install
 
 1. Create an ssh-key pair for your user: <https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/installing_on_vmware_vsphere/installer-provisioned-infrastructure#ssh-agent-using_ipi-vsphere-preparing-to-install> 
 Shell script to create key pair:
-```sh
+```bash
+```
 
 2. UPDATE: Moving this to Ansible... Copy the contents of your ssh-key pub file to the last line, under `sshKey: |` in the following file:
   ansible/roles/initialize_cluster/templates/install-config.yaml.j2
 
 3. UPDATE: Moving this to Ansible... Update group_vars/pull-secret.yaml with customer pull-secret
-`ansible-vault edit group_vars/pull-secret.yaml --vault-password-file=../resources/vault-password.txt`
+`ansible-vault` edit group_vars/pull-secret.yaml --vault-password-file=../resources/vault-password.txt`
 
 4. Make sure there is a cluster specific variables folder and all.yaml under ansible/group_vars/cluster.
 Use `ansible/group_vars/cluster/dev/all.yaml` as an example, changing variables to match new cluster.
 
 5. New certificates will need to be saved in vaulted files using `ansible-vault` command: <https://docs.ansible.com/ansible/latest/user_guide/vault.html>
-   1. Each cluster has a certs file. You can view the format of the file with `ansible-vault edit filename`
+   1. Each cluster has a certs file. You can view the format of the file with `ansible-vault` edit filename`
    2. Be sure to view the format of the existing certs files before adding a new one. If the format doesn't match the playbooks will fail. The certs info is indented four (4) spaces.
    3. Currently the vault password is being stored in plain text in resources/vault-password.txt. Suggest saving this file to an encrypted password application.
    4. Where you see `--vault-password-file=../resources/vault-password.txt` in the examples below, substitute with `--ask-vault-pass` for production builds, and should be a different password
 
 ## Initialize the Cluster
+
+*UPDATE*: 
+Run the following command to create the secrets file.
+```bash
+./010-run-prep-cluster-install.sh lab lab | tee -a 010pb.out
+```
+
+Run this command to initialize the cluster.
+```bash
+./020-run-initialize-cluster.sh lab lab | tee -a 020pb.out
+```
+
 
 Run the run.sh script to build the cluster. The script will set up the ansible environment, and run the initialize_cluster.yaml playbook.
 The run.sh script takes two parameters:
@@ -71,7 +85,6 @@ cd openshift-vsphere-ipi-install
 # Run the script to build the cluster - Our use case is lab
 . run.sh lab lab > result.out
 ```
-
 
 ## Before Moving to Next Steps
 

@@ -2,7 +2,7 @@
 - name: Prepare to execute initialize cluster
   hosts: localhost
   connection: local
-  gather_facts: true
+  gather_facts: false
   become: false
 
   tasks:

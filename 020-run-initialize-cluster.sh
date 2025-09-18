@@ -25,6 +25,9 @@ ANSIBLE_DIR="ansible"
 # Run the Ansible playbook in a container
 printf "Podman container starting...\n"
 podman run --rm \
+  -u $(id -u):$(id -g) \
+  -v $PROJECT_DIR/$ANSIBLE_DIR/tmpdir:/runner/project/tmpdir:Z \
+  -v $PROJECT_DIR/$ANSIBLE_DIR/ansible-logs:/runner/project/ansible-logs:Z \
   -v $PROJECT_DIR/$ANSIBLE_DIR:/runner/project:Z \
   -v $PROJECT_DIR/resources:/runner/resources:Z \
   -v ~/.ansible:/home/runner/.ansible:Z \
@@ -35,6 +38,6 @@ podman run --rm \
     -e @/runner/project/group_vars/env/${ENV}/all.yaml \
     -e @/runner/project/secrets/${CLUSTER}/secrets.yaml \
     --vault-password-file=/runner/resources/vault-password.txt \
-    /runner/project/initialize_cluster.yaml -vvvv
+    /runner/project/initialize_cluster.yaml -vvv
 
 

@@ -1,6 +1,0 @@
----
-collections:
-- name: kubernetes.core
-- name: community.hashi_vault
-- name: community.general
-- name: ansible.scm
