@@ -12,6 +12,9 @@ EE_NAME=ocp-provision-ee
 EE_VERSION=1.0
 EE_VERBOSITY=3
 
+# Authentication file for image repositories
+export REGISTRY_AUTH_FILE=$HOME/.config/containers/auth.json
+
 # Cache the base image to localhost
 podman pull registry.redhat.io/ansible-automation-platform-25/ee-supported-rhel9:latest
 # podman pull registry.redhat.io/ansible-automation-platform-25/ee-minimal-rhel9:latest
@@ -23,14 +26,6 @@ rm -rf context &> /dev/null
 startTs=$(date +"%c")
 printf ">>>> Build start @ $startTs <<<<\n" 
 startTs=$SECONDS
-
-podman pull registry.redhat.io/ansible-automation-platform-25/ee-supported-rhel9:latest
-# podman pull registry.redhat.io/ansible-automation-platform-25/ee-minimal-rhel9:latest
-
-cd ${BASE_DIR}${EE_NAME}
-
-# Clean the context directory
-rm -rf context &> /dev/null
 
 ansible-builder build --verbosity ${EE_VERBOSITY} --prune-images --tag ${EE_NAME}:${EE_VERSION} --tag ${EE_NAME}:latest
 
