@@ -114,11 +114,10 @@
     msg: "Plaintext YAML file size: {{ file_stat.stat.size }} bytes"
 
 - name: Encrypt secrets_yaml_file with Ansible Vault and remove plaintext after
-  ansible.builtin.command:
-    cmd: >
-      ansible-vault encrypt {{ secrets_yaml_file }} --vault-password-file {{ vault_password_file }}
-  args:
-    removes: "{{ secrets_yaml_file }}"
+  ansible.builtin.shell:
+    cmd: |
+      ansible-vault encrypt {{ secrets_yaml_file }} --vault-password-file {{ vault_password_file }}; 
+      chmod 660 {{ secrets_yaml_file }}
   register: encrypt_result
   changed_when: encrypt_result.rc == 0
 

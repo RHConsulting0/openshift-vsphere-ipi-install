@@ -25,13 +25,11 @@ ANSIBLE_DIR="ansible"
 # Run the Ansible playbook in a container
 printf "Podman container starting...\n"
 podman run --rm \
-  -u $(id -u):$(id -g) \
-  -v $PROJECT_DIR/$ANSIBLE_DIR/tmpdir:/runner/project/tmpdir:Z \
-  -v $PROJECT_DIR/$ANSIBLE_DIR/ansible-logs:/runner/project/ansible-logs:Z \
+  --ipc=host \
+  --user=root \
+  --group-add=root \
   -v $PROJECT_DIR/$ANSIBLE_DIR:/runner/project:Z \
   -v $PROJECT_DIR/resources:/runner/resources:Z \
-  -v $PROJECT_DIR/$ANSIBLE_DIR/secrets/lab:/runner/project/secrets/lab:Z \
-  -v ~/.ansible:/home/runner/.ansible:Z \
   $EXECUTION_CONTAINER \
   ansible-playbook -i /runner/project/inventory.yml \
     -e @/runner/project/group_vars/cluster/${CLUSTER}/all.yaml \
