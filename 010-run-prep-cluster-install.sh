@@ -19,7 +19,7 @@ ENV=$2
 EXECUTION_CONTAINER="localhost/ocp-provision-ee:latest"
 
 # Project and Ansible directories
-PROJECT_DIR="/home/miryan/Documents/projects/odfl/repos/openshift-vsphere-ipi-install"
+PROJECT_DIR="$(pwd)"
 ANSIBLE_DIR="ansible"
 
 # Run the Ansible playbook in a container

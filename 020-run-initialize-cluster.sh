@@ -18,7 +18,7 @@ EXECUTION_CONTAINER="ocp-provision-ee:latest"
 #EXECUTION_CONTAINER="registry.redhat.io/ansible-automation-platform-25/ee-supported-rhel9:latest"
 
 # Project and Ansible directories
-PROJECT_DIR="/home/miryan/Documents/projects/odfl/repos/openshift-vsphere-ipi-install"
+PROJECT_DIR="$(pwd)"
 ANSIBLE_DIR="ansible"
 
 
