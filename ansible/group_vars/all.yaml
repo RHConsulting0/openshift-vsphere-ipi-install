@@ -14,7 +14,7 @@ openshift_install:
 
 install_config:
   ocp_install_ver: 4.18.23
-  base_domain: base_domain.org
+  base_domain: base-domain.com
   # Change IP's per customer
   network:
     cluster_network:

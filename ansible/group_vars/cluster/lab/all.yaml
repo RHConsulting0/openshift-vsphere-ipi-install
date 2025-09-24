@@ -6,26 +6,52 @@ openshift_install:
   log_level: debug          #  (e.g. "debug | info | warn | error") (default "info")
 
 # secrets and keys
-pull_secret_json_file: "/runner/resources/pull-secret.json"
+pull_secret_json_file: "/runner/all-clusters-resources/pull-secret.json"
 ssh_pub_file: "/runner/project/secrets/lab/id_ed25519_odfl.pub"
 secrets_lab_dir: "/runner/project/secrets/lab"
 secrets_yaml_file: "/runner/project/secrets/lab/secrets.yaml"
-vault_password_file: "/runner/resources/vault-password.txt"   # adjust as needed
+vault_password_file: "/runner/all-clusters-resources/vault-password.txt"   # adjust as needed
 secrets: "{{ lookup ('file', secrets_yaml_file) | from_yaml }}"
 
 # OpenShift install config settings
-vcenter_cluster:
-  # vm is a hidden element in the below path and is required to work
-  folder_path: "/VCenter/Folder/vm/Path/"
-  folder_name: "VCenterFolder_Name"
-  template_name: this-needs-to-be-updated-after-IPI-build-starts
-  api_vip: 10.7.22.24
-  ingress_vip: 10.7.22.25
-  network: VCenter-network
-  cluster_name: VCenter-cluster-name
 
+# ODFL environment
+proxy_config:
+  httpProxy: "http://customer.com:8080"
+  httpsProxy: "http://customer.com:8080"
+  noProxy: "customer.com"
+additional_trust_bundle_policy: "Always"
+
+
+# vSphere Platform Configuration
+platform_vsphere:
+  # vm is a hidden element in the below path and is required to work
+  api_vips:
+    - "10.0.0.0"
+  ingress_vips:
+    - "10.0.0.1"
+  failure_domain:
+    name: "generated-failure-domain"
+    region: "generated-region"  
+    server: "dc1-p-a-vcenter1.corp.yyzz.com"
+    topology:
+      compute_cluster: "/DC1-Chicago/host/DC1-ESX-LINUX-NONPROD-CLUSTER1"
+      data_center: "DC1-Chicago"
+      datastore: "/DC1-Chicago/datastore/DC1-NFS01-ESX-REDHAT-NONPROD-DS1"
+      networks:
+        - "QA-LINUX-NONPROD"
+      resource_pool: "/DC1-Chicago/host/DC1-ESX-LINUX-NONPROD-CLUSTER1/Resources"
+    zone: "generated-zone"
+  vcenters:
+  - datacenters:
+    - "DC1-Chicago"  
+    port: 443
+    server: "dc1-p-a-vcenter1.corp.yyzz.com"
+    user: "corp\\svccldvm01"
+
+  
 install_config_cluster:
-  cluster_name: OCP-cluster-name-here
+  cluster_name: ocp-cluster-name-here
 
 vmconfig:
   master:
@@ -59,4 +85,29 @@ group_sync_cluster:
 network_policy:
   egress_cidr: "10.#.#.0/24"
 
-
+# Secrets (use Ansible Vault for these)
+pull_secret: "{{ vault_pull_secret }}"
+ssh_key: "{{ vault_ssh_key }}"
+vcenter_password: "{{ vault_vcenter_password | default('PLACEHOLDER') }}"
+vault_trust_bundle: |
+  -----BEGIN CERTIFICATE-----
+  MIIDDTCCAfWgAwIBAgIUTVqm5+7wfxY2bb4STIiYF5lpyEgwDQYJKoZIhvcNAQEL
+  BQAwFjEUMBIGA1UEAwwLZXhhbXBsZS5jb20wHhcNMjUwOTIzMTk0NzQwWhcNMjYw
+  OTIzMTk0NzQwWjAWMRQwEgYDVQQDDAtleGFtcGxlLmNvbTCCASIwDQYJKoZIhvcN
+  AQEBBQADggEPADCCAQoCggEBANXdwBEBJnM2YJVDLU4ke8Y1jGBr4eenjavANkmo
+  N/Dntuos2OmLIbRCGbtLf/oAVUjXtTNclO33ouRepohYD/qysfAuhLaH/gcgwJqQ
+  aVd97nQQ+2U3Voi3/m/21sGApsxJe4nJBzBdlFX8AGHZDqDyikyRXBkWza95TKoB
+  MPc46eZkkJ4jAZal/0SIjvfqboTBsXiG0EyPO2D8+SCIu4jcZ1OlY1kktozw7HDh
+  9u7pmakBT9YG9g5JvrMdSQRoouKgT3qZaBynq2EgGjNj++1MUfQms2B5thezIK0v
+  qvtWhVse9GnCaQzps4Ln5IgIjPfZOO6JZqou5yY29SwcLn8CAwEAAaNTMFEwHQYD
+  VR0OBBYEFMfWulH1pxBuePfORilKDsITOrWRMB8GA1UdIwQYMBaAFMfWulH1pxBu
+  ePfORilKDsITOrWRMA8GA1UdEwEB/wQFMAMBAf8wDQYJKoZIhvcNAQELBQADggEB
+  AEFGa0ltgU/fdO87GXCzCPX1C5mDYI1fV3QogSBDdqyhnRpu5b7PH2vXGi2mHyXF
+  BYx3Ttudiegu+YnqfyWVqe8cBR3zlvJnke4wunbmu42p23v4HPBZVOz47m3O5Atu
+  HOLFTLevjh1atxXJKb0xuY48wGQ0yzVcar41nwcar1XO6Ghp3h+/9eHkHjFPXVxe
+  V9/YnoZgYg/FRkOx8qj+qmMmmJL8oD5GW4FDdIO4NKdCO5+VUpqOugeGOADeq/o9
+  cHs96eC+uHdzMbiJCcTlR9A0okyoBSapxfI5bEVLzGZCdoDqcyjuWjipfOsREN/K
+  nuEL66PkMNA+93bNFGlfieE=
+  -----END CERTIFICATE-----
+additional_trust_bundle: |
+  {{ vault_trust_bundle }}

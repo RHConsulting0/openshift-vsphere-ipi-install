@@ -1,6 +1,6 @@
 #!/bin/bash
 
-RESOURCE_DIR="/home/miryan/Documents/projects/odfl/repos/openshift-vsphere-ipi-install/resources"
+RESOURCE_DIR="/home/miryan/Documents/projects/odfl/repos/openshift-vsphere-ipi-install/all-clusters-resources"
 ANSIBLE_DIR="/home/miryan/Documents/projects/odfl/repos/openshift-vsphere-ipi-install/ansible"
 
 

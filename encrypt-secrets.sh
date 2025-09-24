@@ -5,7 +5,7 @@ PROJECT_DIR="/home/miryan/Documents/projects/odfl/repos/openshift-vsphere-ipi-in
 ANSIBLE_DIR="ansible"
 
 # Encrypt pull-secret.json using ansible-vault in a podman container
-PLAIN_TEXT_PULL_SECRET="/runner/resources/pull-secret.json"
+PLAIN_TEXT_PULL_SECRET="/runner/all-clusters-resources/pull-secret.json"
 PULL_SECRET="/runnner/project/secrets/lab/pull-secret.json"
 
 # SSH keys
@@ -13,7 +13,7 @@ RSA_KEY="/runner/project/secrets/lab/id_rsa_odfl"
 ED25519_KEY="/runner/project/secrets/lab/id_ed25519_odfl"
 
 # Vault password file
-VAULT_PWD="/runner/resources/vault-password.txt"
+VAULT_PWD="/runner/all-clusters-resources/vault-password.txt"
 
 # Actions
 ENCRYPT="encrypt"
@@ -38,8 +38,8 @@ printf "\nEncrypted file created[%s]: %s\n\n" $ED25519_KEY $(cat $ED25519_KEY)
 
 
 # sanity check for pull-secret.json
-printf "Resources file [$PROJECT_DIR/resources/pull-secret.json] - should not be encrypted\n\n"
-cat $PROJECT_DIR/resources/pull-secret.json
+printf "Resources file [$PROJECT_DIR/all-clusters-resources/pull-secret.json] - should not be encrypted\n\n"
+cat $PROJECT_DIR/all-clusters-resources/pull-secret.json
 
 podman run --rm -v ${PROJECT_DIR}/${ANSIBLE_DIR}:/runner/project:Z \
   registry.redhat.io/ansible-automation-platform-25/ee-supported-rhel9:latest \
@@ -58,7 +58,7 @@ vault_podman() {
     if [ -n "$output" ]; then
         podman run --rm \
           -v ${PROJECT_DIR}/${ANSIBLE_DIR}:/runner/project:Z \
-          -v ${PROJECT_DIR}/resources:/runner/resources:Z \
+          -v ${PROJECT_DIR}/all-clusters-resources:/runner/all-clusters-resources:Z \
           -v ${PROJECT_DIR}/${ANSIBLE_DIR}/secrets/lab :/runner/project/secrets/lab:Z \
           -v ~/.ansible:/home/runner/.ansible:Z \
           registry.redhat.io/ansible-automation-platform-25/ee-supported-rhel9:latest \
@@ -68,7 +68,7 @@ vault_podman() {
     else
         podman run --rm \
           -v ${PROJECT_DIR}/${ANSIBLE_DIR}:/runner/project:Z \
-          -v ${PROJECT_DIR}/resources:/runner/resources:Z \
+          -v ${PROJECT_DIR}/all-clusters-resources:/runner/all-clusters-resources:Z \
           -v ${PROJECT_DIR}/${ANSIBLE_DIR}/secrets/lab :/runner/project/secrets/lab:Z \
           -v ~/.ansible:/home/runner/.ansible:Z \
           registry.redhat.io/ansible-automation-platform-25/ee-supported-rhel9:latest \

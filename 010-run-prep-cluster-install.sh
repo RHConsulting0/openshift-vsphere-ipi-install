@@ -29,15 +29,14 @@ podman run --rm \
   --user=root \
   --group-add=root \
   -v $PROJECT_DIR/$ANSIBLE_DIR:/runner/project:Z \
-  -v $PROJECT_DIR/resources:/runner/resources:Z \
+  -v $PROJECT_DIR/all-clusters-resources:/runner/all-clusters-resources:Z \
   $EXECUTION_CONTAINER \
   ansible-playbook -i /runner/project/inventory.yml \
     -e @/runner/project/group_vars/cluster/${CLUSTER}/all.yaml \
     -e @/runner/project/group_vars/env/${ENV}/default-vault.yaml \
     -e @/runner/project/group_vars/env/${ENV}/all.yaml \
-    -e @/runner/resources/pull-secret.json \
-    -e @/runner/project/secrets/${CLUSTER}/pull-secret.json \
-    --vault-password-file=/runner/resources/vault-password.txt \
+    -e @/runner/all-clusters-resources/pull-secret.json \
+    --vault-password-file=/runner/all-clusters-resources/vault-password.txt \
     /runner/project/prep_cluster_install.yaml -vvv
 
 

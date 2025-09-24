@@ -46,7 +46,7 @@ Shell script to create key pair:
   ansible/roles/initialize_cluster/templates/install-config.yaml.j2
 
 3. UPDATE: Moving this to Ansible... Update group_vars/pull-secret.yaml with customer pull-secret
-`ansible-vault` edit group_vars/pull-secret.yaml --vault-password-file=../resources/vault-password.txt`
+`ansible-vault` edit group_vars/pull-secret.yaml --vault-password-file=../all-clusters-resources/vault-password.txt`
 
 4. Make sure there is a cluster specific variables folder and all.yaml under ansible/group_vars/cluster.
 Use `ansible/group_vars/cluster/dev/all.yaml` as an example, changing variables to match new cluster.
@@ -54,8 +54,8 @@ Use `ansible/group_vars/cluster/dev/all.yaml` as an example, changing variables 
 5. New certificates will need to be saved in vaulted files using `ansible-vault` command: <https://docs.ansible.com/ansible/latest/user_guide/vault.html>
    1. Each cluster has a certs file. You can view the format of the file with `ansible-vault` edit filename`
    2. Be sure to view the format of the existing certs files before adding a new one. If the format doesn't match the playbooks will fail. The certs info is indented four (4) spaces.
-   3. Currently the vault password is being stored in plain text in resources/vault-password.txt. Suggest saving this file to an encrypted password application.
-   4. Where you see `--vault-password-file=../resources/vault-password.txt` in the examples below, substitute with `--ask-vault-pass` for production builds, and should be a different password
+   3. Currently the vault password is being stored in plain text in all-clusters-resources/vault-password.txt. Suggest saving this file to an encrypted password application.
+   4. Where you see `--vault-password-file=../all-clusters-resources/vault-password.txt` in the examples below, substitute with `--ask-vault-pass` for production builds, and should be a different password
 
 ## Initialize the Cluster
 
@@ -117,7 +117,7 @@ Or go to the next section to run individual plays to update, or check a config s
 ansible-playbook -i inventory \
 -e @./group_vars/certs/cluster-[cluster]-certs.yaml \
 -e "cluster=[cluster]" \
---vault-password-file=../resources/vault-password.txt \
+--vault-password-file=../all-clusters-resources/vault-password.txt \
 certs_deployment_playbook.yaml
 ```
 
@@ -146,7 +146,7 @@ ansible-playbook -i inventory \
 -e @./group_vars/env/[env]/default-vault.yaml \
 -e @./group_vars/env/[env]/all.yaml \
 -e @./group_vars/quay.yaml \
---vault-password-file=../resources/vault-password.txt \
+--vault-password-file=../all-clusters-resources/vault-password.txt \
 --tags ocp \
 finalize_cluster.yaml
 ```
@@ -158,7 +158,7 @@ ansible-playbook -i inventory \
 -e @./group_vars/cluster/[quay_cluster]/all.yaml \
 -e @./group_vars/env/[env]]/default-vault.yaml \
 -e @./group_vars/env/[env]/all.yaml \
---vault-password-file=../resources/vault-password.txt \
+--vault-password-file=../all-clusters-resources/vault-password.txt \
 --tags quay \
 finalize_cluster.yaml
 ```
@@ -179,7 +179,7 @@ ansible-playbook -i inventory \
 -e @./group_vars/certs/cluster-[cluster]-certs.yaml \
 -e "cluster=[cluster]" \
 certs_deployment_playbook.yaml \
---vault-password-file=../resources/vault-password.txt
+--vault-password-file=../all-clusters-resources/vault-password.txt
 ```
 
 ### Include Chrony Machineconfigs
@@ -206,7 +206,7 @@ ansible-playbook -i inventory \
 -e @./group_vars/cluster/[cluster]/all.yaml \
 -e @./group_vars/env/[env]/all.yaml \
 -e "role_assigned=storage" \
---vault-password-file=../resources/vault-password.txt \
+--vault-password-file=../all-clusters-resources/vault-password.txt \
 machinesets_playbook.yaml
 ```
 
@@ -216,7 +216,7 @@ machinesets_playbook.yaml
 ansible-playbook -i inventory \
 -e @./group_vars/env/[env]/default-vault.yaml \
 -e @./group_vars/env/[env]/all.yaml \
---vault-password-file=../resources/vault-password.txt \
+--vault-password-file=../all-clusters-resources/vault-password.txt \
 ldap_playbook.yaml
 ```
 
@@ -226,7 +226,7 @@ ldap_playbook.yaml
 ansible-playbook -i inventory \
 -e @./group_vars/env/[env]/default-vault.yaml \
 -e @./group_vars/cluster/[cluster]/all.yaml \
---vault-password-file=../resources/vault-password.txt \
+--vault-password-file=../all-clusters-resources/vault-password.txt \
 ldap_groupsync_playbook.yaml
 ```
 
@@ -246,7 +246,7 @@ nodeconfig_playbook.yaml
 ansible-playbook -i inventory \
 -e @./group_vars/quay.yaml \
 -e "cluster=[cluster]" \
---vault-password-file=../resources/vault-password.txt \
+--vault-password-file=../all-clusters-resources/vault-password.txt \
 operators_config_playbook.yaml
 ```
 
@@ -358,7 +358,7 @@ ansible-playbook -i inventory \
 -e @./group_vars/cluster/[cluster]/all.yaml \
 -e @./group_vars/env/[environment]/all.yaml \
 -e @./group_vars/env/[environment]/default-vault.yaml \
---vault-password-file=../resources/vault-password.txt \
+--vault-password-file=../all-clusters-resources/vault-password.txt \
 install_argocd_playbook.yaml
 ```
 
@@ -411,7 +411,7 @@ ansible-playbook -i inventory \
 -e cluster=[cluster] \
 -e @./group_vars/pull-secret.yaml \
 update_pullsecret_playbook.yaml \
---vault-password-file=../resources/vault-password.txt
+--vault-password-file=../all-clusters-resources/vault-password.txt
 ```
 
 ## Backup of Bitnami Sealed Secret

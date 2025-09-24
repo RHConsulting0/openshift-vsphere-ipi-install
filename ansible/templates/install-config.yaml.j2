@@ -1,97 +1,85 @@
----
 apiVersion: v1
-baseDomain: {{ base_domain }}
-metadata:
-  name: {{ cluster_name }}
-{% if compute is defined %}
-compute:
-- hyperthreading: {{ compute.hyperthreading | default('Enabled') }}
-  name: worker
-  replicas: {{ compute.replicas | default(3) }}
-  {% if compute.platform is defined and compute.platform.vsphere is defined %}
-  platform:
-    vsphere:
-      {% if compute.platform.vsphere.cores is defined %}
-      cores: {{ compute.platform.vsphere.cores | default(4) }}
-      {% endif %}
-      {% if compute.platform.vsphere.memory_mb is defined %}
-      memoryMB: {{ compute.platform.vsphere.memory_mb | default(16384) }}
-      {% endif %}
-      {% if compute.platform.vsphere.os_disk is defined %}
-      osDisk:
-        diskSizeGB: {{ compute.platform.vsphere.os_disk.disk_size_gb | default(120) }}
-      {% endif %}
-  {% endif %}
-  {% else %}
-  platform: {}  
-{% endif %}
-{% if control_plane is defined %}
-controlPlane:
-  hyperthreading: {{ control_plane.hyperthreading | default('Enabled') }}
-  name: master
-  replicas: {{ control_plane.replicas | default(3) }}
-  {% if control_plane.platform is defined and control_plane.platform.vsphere is defined %}
-  platform:
-    vsphere:
-      {% if control_plane.platform.vsphere.cores is defined %}
-      cores: {{ control_plane.platform.vsphere.cores | default(4) }}
-      {% endif %}
-      {% if control_plane.platform.vsphere.memory_mb is defined %}
-      memoryMB: {{ control_plane.platform.vsphere.memory_mb | default(16384) }}
-      {% endif %}
-      {% if control_plane.platform.vsphere.os_disk is defined %}
-      osDisk:
-        diskSizeGB: {{ control_plane.platform.vsphere.os_disk.disk_size_gb | default(120) }}
-      {% endif %}
-  {% endif %}
-  {% else %}
-  platform: {}
-{% endif %}
-networking:
-  clusterNetwork:
-  - cidr: {{ networking.cluster_network_cidr | default('10.128.0.0/14') }}
-    hostPrefix: {{ networking.cluster_network_host_prefix | default(23) }}
-  machineNetwork:
-  - cidr: {{ networking.machine_network_cidr | default('10.0.0.0/16') }}
-  {% if networking.network_type is defined %}
-  networkType: {{ networking.network_type | default('OVNKubernetes') }}
-  {% endif %}
-  serviceNetwork:
-  - {{ networking.service_network_cidr | default('172.30.0.0/16') }}
-platform:
-  vsphere:
-    vCenter: {{ platform.vsphere.vcenter_server }}
-    username: {{ platform.vsphere.vcenter_username }}
-    password: {{ platform.vsphere.vcenter_password }}
-    datacenter: {{ platform.vsphere.datacenter }}
-    defaultDatastore: {{ platform.vsphere.default_datastore }}
-    {% if platform.vsphere.folder is defined %}
-    folder: {{ platform.vsphere.folder }}
-    {% endif %}
-    {% if platform.vsphere.cluster is defined %}
-    cluster: {{ platform.vsphere.cluster }}
-    {% endif %}
-    {% if platform.vsphere.api_vip is defined %}
-    apiVIP: {{ platform.vsphere.api_vip }}
-    {% endif %}
-    {% if platform.vsphere.ingress_vip is defined %}
-    ingressVIP: {{ platform.vsphere.ingress_vip }}
-    {% endif %}
-    {% if platform.vsphere.network is defined %}
-    network: {{ platform.vsphere.network }}
-    {% endif %}
-    {% if platform.vsphere.resource_pool is defined %}
-    resourcePool: {{ platform.vsphere.resource_pool }}
-    {% endif %}
-{% if pull_secret is defined %}
-pullSecret: |
-  {{ pull_secret | to_nice_json | indent(2) }}
-{% endif %}  
-{% if ssh_key is defined %}
-sshKey: |
-  {{ ssh_key | indent(2) }}
+baseDomain: {{ install-config.base_domain | default('preprd.odcloud.odfl.com') }}
+{% if proxy_config is defined and proxy_config.enabled %}
+proxy:
+  httpProxy: {{ proxy_config.http_proxy | default('http://netskopegre.corp.odfl.com:8080') }}
+  httpsProxy: {{ proxy_config.https_proxy | default('http://netskopegre.corp.odfl.com:8080') }}
+  noProxy: {{ proxy_config.no_proxy | default('odfl.com') }}
 {% endif %}
 {% if additional_trust_bundle is defined %}
 additionalTrustBundle: |
-  {{ additional_trust_bundle | indent(2) }}
+{{ additional_trust_bundle | indent(4, True) }}
+additionalTrustBundlePolicy: {{ additional_trust_bundle_policy | default('Always') }}
+{% endif %}
+compute:
+- architecture: {{ vmconfig.compute_architecture | default('amd64') }}
+  hyperthreading: {{ vmconfig.compute_hyperthreading | default('Enabled') }}
+  name: worker
+  platform:
+    vsphere:
+      cpus: {{ vmconfig.compute_cpus | default(16) }}
+      memoryMB: {{ vmconfig.compute.ram | default(32768) }}
+      osDisk:
+        diskSizeGB: {{ vmconfig.compute.disk_size_gb | default(120) }}
+  replicas: {{ vmconfig.compute.replicas | default(2) }}
+controlPlane:
+  architecture: {{ vmconfig.control_plane_architecture | default('amd64') }}
+  hyperthreading: {{ vmconfig.control_plane_hyperthreading | default('Enabled') }}
+  name: master
+  platform:
+    vsphere:
+      cpus: {{ vmconfig.control_plane_cpus | default(16) }}
+      memoryMB: {{ vmconfig.control_plane.ram | default(40960) }}
+      osDisk:
+        diskSizeGB: {{ vmconfig.control_plane.disk_size_gb | default(120) }}
+  replicas: {{ vmconfig.control_plane.replicas | default(3) }}
+metadata:
+  name: {{ install_config_cluster.cluster_name }}
+networking:
+  clusterNetwork:
+  - cidr: {{ install_config.network.cluster_network.cidr | default('10.128.0.0/14') }}
+    hostPrefix: {{ install_config.network.cluster_network.host_prefix | default(23) }}
+  machineNetwork:
+  - cidr: {{ install-config.network.machine_network }}
+  networkType: {{ network_type | default('OVNKubernetes') }}
+  serviceNetwork:
+  - {{ install_config.network.service_network | default('172.30.0.0/16') }}
+platform:
+  vsphere:
+    apiVIPs:
+{% for vip in api_vips %}
+      - {{ vcenter_cluster.api_vip }}
+{% endfor %}
+    failureDomains:
+      - name: {{ install_config.failure_domains.name | default('generated-failure-domain') }}
+        region: {{ install_config.failure_domains.region | default('generated-region') }}
+        server: {{ install_config.failure_domains.vcenter_server | default('dc1-p-a-vcenter1.corp.odfl.com') }}
+        topology:
+          computeCluster: {{ install-config.failure_domains.compute_cluster | default('/DC1-Chicago/host/DC1-ESX-LINUX-NONPROD-CLUSTER1') }}
+          datacenter: {{ install-config.failure_domains.datacenter | default('DC1-Chicago') }}
+          datastore: {{ install-config.failure_domains.datastore | default('/DC1-Chicago/datastore/DC1-NFS01-ESX-REDHAT-NONPROD-DS1') }}
+          networks:
+{% for network in networks | default(['QA-LINUX-NONPROD']) %}
+            - {{ vcenter_cluster.network }}
+{% endfor %}
+          resourcePool: {{ resource_pool | default('/DC1-Chicago/host/DC1-ESX-LINUX-NONPROD-CLUSTER1/Resources') }}
+        zone: {{ failure_domain_zone | default('generated-zone') }}
+    ingressVIPs:
+{% for vip in ingress_vips %}
+      - {{ vcenter_cluster.ingress_vip }}
+{% endfor %}
+    vcenters:
+      - datacenters:
+{% for dc in datacenters | default(['DC1-Chicago']) %}
+          - {{ vcenter.datacenter }}
+{% endfor %}
+        password: {{ vcenter_password | default('') }}
+        port: {{ vsphere_port | default(443) }}
+        server: {{ vcenter_server | default('dc1-p-a-vcenter1.corp.odfl.com') }}
+        user: {{ vsphere_user | default('corp\\svccldvm01') }}
+publish: {{ publish_type | default('External') }}
+pullSecret: '{{ secrets.pullSecret | default('') }}'
+{% if ssh_key is defined %}
+sshKey: |
+{{ secrets.sshKey | indent(2, True) }}
 {% endif %}

@@ -59,7 +59,7 @@
   set_fact:
     combined_yaml: |
       pullSecret: |
-        {{ pull_secret_raw.content | b64decode }}
+        {{ pull_secret_raw.content | b64decode | from_json | to_json }}
       sshKey: "{{ ssh_pub.content | b64decode | trim }}"
 
 - name: Debug - show combined YAML length
@@ -116,7 +116,7 @@
 - name: Encrypt secrets_yaml_file with Ansible Vault and remove plaintext after
   ansible.builtin.shell:
     cmd: |
-      ansible-vault encrypt {{ secrets_yaml_file }} --vault-password-file {{ vault_password_file }}; 
+      ansible-vault encrypt {{ secrets_yaml_file }} --vault-password-file {{ vault_password_file }};
       chmod 660 {{ secrets_yaml_file }}
   register: encrypt_result
   changed_when: encrypt_result.rc == 0

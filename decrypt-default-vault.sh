@@ -1,6 +1,6 @@
 #!/bin/bash
 
-RESOURCE_DIR="/home/miryan/Documents/projects/odfl/repos/openshift-vsphere-ipi-install/resources"
+RESOURCE_DIR="/home/miryan/Documents/projects/odfl/repos/openshift-vsphere-ipi-install/all-clusters-resources"
 DEFAULT_VAULT_FILE="/home/miryan/Documents/projects/odfl/repos/openshift-vsphere-ipi-install/ansible/group_vars/env/lab/default-vault.yaml"
 
 
