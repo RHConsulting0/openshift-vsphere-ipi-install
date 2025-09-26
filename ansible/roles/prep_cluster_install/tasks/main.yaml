@@ -12,7 +12,6 @@
 - name: Confirm the tmpdir
   block:
 
-
     - name: Check for tmpdir directory
       ansible.builtin.stat:
         path: "/runner/project/tmpdir"
@@ -40,31 +39,120 @@
           - "Please resolve the missing directory and contents"
       when: ocp_secrets is not defined
 
+# Read secrets files into variables
 - name: Read pull-secret.json (plain text)
   ansible.builtin.slurp:
     src: "{{ pull_secret_json_file }}"
   register: pull_secret_raw
 
-- name: Read the SSH public key file
+- name: Read the SSH public key file (plain text)
   ansible.builtin.slurp:
     src: "{{ ssh_pub_file }}"
   register: ssh_pub
 
-- name: Print the raw pull-secret content for debugging
-  ansible.builtin.debug:
-    var: pull_secret_raw
-  when: pull_secret_raw is defined
+- name: Read vsphere password (plain text)
+  ansible.builtin.slurp:
+    src: "{{ vsphere_password_file }}"
+  register: vsphere_password_raw
 
-- name: Build combined YAML content (pullSecret + sshKey)
-  set_fact:
-    combined_yaml: |
-      pullSecret: |
-        {{ pull_secret_raw.content | b64decode | from_json | to_json }}
+- name: Read trust bundle (plain text)
+  ansible.builtin.slurp:
+    src: "{{ additional_trust_bundle_file }}"
+  register: trust_bundle_raw
+
+- name: Ensure required variables are defined
+  ansible.builtin.assert:
+    that:
+      - pull_secret_raw.content is defined and pull_secret_raw.content | length > 0
+      - ssh_pub.content is defined and ssh_pub.content | length > 0
+      - vsphere_password_raw.content is defined and vsphere_password_raw.content | length > 0
+      - trust_bundle_raw.content is defined and trust_bundle_raw.content | length > 0
+    fail_msg: >
+      "One or more required secrets (pull_secret_raw.content, ssh_pub.content, vsphere_password_raw.content, trust_bundle_raw.content) are undefined or empty"
+  run_once: true
+
+- name: Debug pull_secret_raw.content
+  ansible.builtin.debug:
+    msg: "pull_secret_raw.content (base64): {{ pull_secret_raw.content | default('UNDEFINED') }}"
+  when: ansible_verbosity >= 2
+  run_once: true
+
+- name: Debug ssh_pub.content
+  ansible.builtin.debug:
+    msg: "ssh_pub.content (base64): {{ ssh_pub.content | default('UNDEFINED') }}"
+  when: ansible_verbosity >= 2
+  run_once: true
+
+- name: Debug vsphere_password_raw.content
+  ansible.builtin.debug:
+    msg: "vsphere_password_raw.content (base64): {{ vsphere_password_raw.content | default('UNDEFINED') }}"
+  when: ansible_verbosity >= 2
+  run_once: true
+
+- name: Debug trust_bundle_raw.content
+  ansible.builtin.debug:
+    msg: "trust_bundle_raw.content (base64): {{ trust_bundle_raw.content | default('UNDEFINED') }}"
+  when: ansible_verbosity >= 2
+  run_once: true
+
+- name: Debug decoded pull secret
+  ansible.builtin.debug:
+    msg: "pull_secret_decoded: {{ pull_secret_raw.content | b64decode | default('INVALID_BASE64', true) }}"
+  when: ansible_verbosity >= 2
+  run_once: true
+
+- name: Debug decoded ssh key
+  ansible.builtin.debug:
+    msg: "ssh_key_decoded: {{ ssh_pub.content | b64decode | trim | default('INVALID_BASE64', true) }}"
+  when: ansible_verbosity >= 2
+  run_once: true
+
+- name: Debug decoded vsphere password
+  ansible.builtin.debug:
+    msg: "vsphere_password_decoded: {{ vsphere_password_raw.content | b64decode | trim | default('INVALID_BASE64', true) }}"
+  when: ansible_verbosity >= 2
+  run_once: true
+
+- name: Debug decoded ca bundle
+  ansible.builtin.debug:
+    msg: "ca_bundle_decoded: {{ trust_bundle_raw.content | b64decode | default('INVALID_BASE64', true) }}"
+  when: ansible_verbosity >= 2
+  run_once: true
+
+- name: Debug pull secret JSON
+  ansible.builtin.debug:
+    msg: "pull_secret_json: {{ (pull_secret_raw.content | b64decode | from_json | default('INVALID_JSON', true)) }}"
+  when: ansible_verbosity >= 2
+  run_once: true
+
+- name: Build combined YAML dictionary (secrets file)
+  ansible.builtin.set_fact:
+    combined_dict:
+      pullSecret: "{{ pull_secret_raw.content | b64decode | from_json | to_json }}"
       sshKey: "{{ ssh_pub.content | b64decode | trim }}"
+      vspherePassword: "{{ vsphere_password_raw.content | b64decode | trim }}"
+      caBundle: "{{ trust_bundle_raw.content | b64decode }}"
+  run_once: true
 
-- name: Debug - show combined YAML length
-  ansible.builtin.debug:
-    msg: "Combined YAML length: {{ combined_yaml | length }} characters"
+- name: Assert combined_dict is a dictionary
+  ansible.builtin.assert:
+    that:
+      - combined_dict is mapping
+    fail_msg: "combined_dict is NOT a dictionary — check how it’s being built."
+    success_msg: "combined_dict is a valid dictionary."
+
+# - name: Convert combined dictionary to YAML
+#   ansible.builtin.set_fact:
+#     combined_yaml: "{{ combined_dict | to_nice_yaml(indent=2) }}"
+#   when: combined_dict is defined
+#   run_once: true
+
+# - name: Assert combined_yaml is a dictionary
+#   ansible.builtin.assert:
+#     that:
+#       - combined_yaml is mapping
+#     fail_msg: "combined_yaml is NOT a dictionary — check how it’s being built."
+#     success_msg: "combined_yaml is a valid dictionary."
 
 - name: Check current permissions for {{ secrets_lab_dir }}
   ansible.builtin.stat:
@@ -83,24 +171,10 @@
     # # Don't set owner - let it inherit from current user/container
   become: false
 
-# - name: Stat the file first
-#   ansible.builtin.stat:
-#     path: /host/mount/target.conf
-#   register: target_stat
-#   ignore_errors: yes
-
-# - name: Write template with same ownership
-#   ansible.builtin.template:
-#     src: mytemplate.j2
-#     dest: /host/mount/target.conf
-#     owner: "{{ target_stat.stat.pw_name | default(omit) }}"
-#     group: "{{ target_stat.stat.gr_name | default(omit) }}"
-#     mode: "{{ target_stat.stat.mode | default('0644') }}"
-
 - name: Write secrets_yaml_file directly (plaintext temporarily)
   ansible.builtin.copy:
     dest: "{{ secrets_yaml_file }}"
-    content: "{{ combined_yaml }}"
+    content: "{{ combined_dict | to_nice_yaml(indent=2) }}"
     owner: "{{ ansible_user_id }}"
     mode: '0644'
 

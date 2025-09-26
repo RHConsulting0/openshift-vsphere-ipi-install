@@ -7,9 +7,9 @@ proxy:
   httpsProxy: {{ proxy_config.https_proxy | default('http://default-customer.com:8080') }}
   noProxy: {{ proxy_config.no_proxy | default('default-customer.com') }}
 {% endif %}
-{%- if additional_trust_bundle is defined %}
+{%- if secrets.caBundle is defined %}
 additionalTrustBundle: |
-{{ additional_trust_bundle | indent(4, true) }}
+{{ secrets.caBundle | indent(4, true) }}
 {%- endif %}
 additionalTrustBundlePolicy: {{ additional_trust_bundle_policy | default('Always') }}
 compute:
@@ -74,7 +74,7 @@ platform:
 {% for dc in datacenters | default(['DC1-Chicago']) %}
       - {{ vcenter.datacenter }}
 {% endfor %}
-      password: {{ secrets.vcenter_password | default('password') }}
+      password: {{ secrets.vspherePassword | default('password') }}
       port: {{ platform_vsphere.vcenters.port | default(443) }}
       server: {{ platform_vsphere.vcenters.server | default('dc1-p-a-vcenter1.corp.company.com') }}
       user: {{ platform_vsphere.vcenters.user | default('corp\\svccldvm01') }}

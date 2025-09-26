@@ -8,6 +8,8 @@ openshift_install:
 # secrets and keys
 pull_secret_json_file: "/runner/all-clusters-resources/pull-secret.json"
 ssh_pub_file: "/runner/project/secrets/lab/id_ed25519_odfl.pub"
+vsphere_password_file: "/runner/all-clusters-resources/lab/vsphere-password.txt"
+additional_trust_bundle_file: "/runner/all-clusters-resources/lab/ca-bundle.crt"
 secrets_lab_dir: "/runner/project/secrets/lab"
 secrets_yaml_file: "/runner/project/secrets/lab/secrets.yaml"
 vault_password_file: "/runner/all-clusters-resources/vault-password.txt"   # adjust as needed
@@ -85,29 +87,37 @@ group_sync_cluster:
 network_policy:
   egress_cidr: "10.#.#.0/24"
 
-# Secrets (use Ansible Vault for these)
-pull_secret: "{{ vault_pull_secret }}"
-ssh_key: "{{ vault_ssh_key }}"
-vcenter_password: "{{ vault_vcenter_password | default('PLACEHOLDER') }}"
-vault_trust_bundle: |
-  -----BEGIN CERTIFICATE-----
-  MIIDDTCCAfWgAwIBAgIUTVqm5+7wfxY2bb4STIiYF5lpyEgwDQYJKoZIhvcNAQEL
-  BQAwFjEUMBIGA1UEAwwLZXhhbXBsZS5jb20wHhcNMjUwOTIzMTk0NzQwWhcNMjYw
-  OTIzMTk0NzQwWjAWMRQwEgYDVQQDDAtleGFtcGxlLmNvbTCCASIwDQYJKoZIhvcN
-  AQEBBQADggEPADCCAQoCggEBANXdwBEBJnM2YJVDLU4ke8Y1jGBr4eenjavANkmo
-  N/Dntuos2OmLIbRCGbtLf/oAVUjXtTNclO33ouRepohYD/qysfAuhLaH/gcgwJqQ
-  aVd97nQQ+2U3Voi3/m/21sGApsxJe4nJBzBdlFX8AGHZDqDyikyRXBkWza95TKoB
-  MPc46eZkkJ4jAZal/0SIjvfqboTBsXiG0EyPO2D8+SCIu4jcZ1OlY1kktozw7HDh
-  9u7pmakBT9YG9g5JvrMdSQRoouKgT3qZaBynq2EgGjNj++1MUfQms2B5thezIK0v
-  qvtWhVse9GnCaQzps4Ln5IgIjPfZOO6JZqou5yY29SwcLn8CAwEAAaNTMFEwHQYD
-  VR0OBBYEFMfWulH1pxBuePfORilKDsITOrWRMB8GA1UdIwQYMBaAFMfWulH1pxBu
-  ePfORilKDsITOrWRMA8GA1UdEwEB/wQFMAMBAf8wDQYJKoZIhvcNAQELBQADggEB
-  AEFGa0ltgU/fdO87GXCzCPX1C5mDYI1fV3QogSBDdqyhnRpu5b7PH2vXGi2mHyXF
-  BYx3Ttudiegu+YnqfyWVqe8cBR3zlvJnke4wunbmu42p23v4HPBZVOz47m3O5Atu
-  HOLFTLevjh1atxXJKb0xuY48wGQ0yzVcar41nwcar1XO6Ghp3h+/9eHkHjFPXVxe
-  V9/YnoZgYg/FRkOx8qj+qmMmmJL8oD5GW4FDdIO4NKdCO5+VUpqOugeGOADeq/o9
-  cHs96eC+uHdzMbiJCcTlR9A0okyoBSapxfI5bEVLzGZCdoDqcyjuWjipfOsREN/K
-  nuEL66PkMNA+93bNFGlfieE=
-  -----END CERTIFICATE-----
-additional_trust_bundle: |
-  {{ vault_trust_bundle }}
+# # Secrets (use Ansible Vault for these)
+# pull_secret: "{{ vault_pull_secret }}"
+# ssh_key: "{{ vault_ssh_key }}"
+# vcenter_password: "{{ vault_vcenter_password | default('PLACEHOLDER') }}"
+# additional_trust_bundle: |
+#   {{ vault_trust_bundle }}
+
+# ** FOR TESTING**
+# vault_trust_bundle: |
+#   -----BEGIN CERTIFICATE-----
+#   MIIDDTCCAfWgAwIBAgIUTVqm5+7wfxY2bb4STIiYF5lpyEgwDQYJKoZIhvcNAQEL
+#   BQAwFjEUMBIGA1UEAwwLZXhhbXBsZS5jb20wHhcNMjUwOTIzMTk0NzQwWhcNMjYw
+#   OTIzMTk0NzQwWjAWMRQwEgYDVQQDDAtleGFtcGxlLmNvbTCCASIwDQYJKoZIhvcN
+#   AQEBBQADggEPADCCAQoCggEBANXdwBEBJnM2YJVDLU4ke8Y1jGBr4eenjavANkmo
+#   N/Dntuos2OmLIbRCGbtLf/oAVUjXtTNclO33ouRepohYD/qysfAuhLaH/gcgwJqQ
+#   aVd97nQQ+2U3Voi3/m/21sGApsxJe4nJBzBdlFX8AGHZDqDyikyRXBkWza95TKoB
+#   MPc46eZkkJ4jAZal/0SIjvfqboTBsXiG0EyPO2D8+SCIu4jcZ1OlY1kktozw7HDh
+#   9u7pmakBT9YG9g5JvrMdSQRoouKgT3qZaBynq2EgGjNj++1MUfQms2B5thezIK0v
+#   qvtWhVse9GnCaQzps4Ln5IgIjPfZOO6JZqou5yY29SwcLn8CAwEAAaNTMFEwHQYD
+#   VR0OBBYEFMfWulH1pxBuePfORilKDsITOrWRMB8GA1UdIwQYMBaAFMfWulH1pxBu
+#   ePfORilKDsITOrWRMA8GA1UdEwEB/wQFMAMBAf8wDQYJKoZIhvcNAQELBQADggEB
+#   AEFGa0ltgU/fdO87GXCzCPX1C5mDYI1fV3QogSBDdqyhnRpu5b7PH2vXGi2mHyXF
+#   BYx3Ttudiegu+YnqfyWVqe8cBR3zlvJnke4wunbmu42p23v4HPBZVOz47m3O5Atu
+#   HOLFTLevjh1atxXJKb0xuY48wGQ0yzVcar41nwcar1XO6Ghp3h+/9eHkHjFPXVxe
+#   V9/YnoZgYg/FRkOx8qj+qmMmmJL8oD5GW4FDdIO4NKdCO5+VUpqOugeGOADeq/o9
+#   cHs96eC+uHdzMbiJCcTlR9A0okyoBSapxfI5bEVLzGZCdoDqcyjuWjipfOsREN/K
+#   nuEL66PkMNA+93bNFGlfieE=
+#   -----END CERTIFICATE-----
+# additional_trust_bundle: |
+#   {{ vault_trust_bundle }}
+
+
+
+

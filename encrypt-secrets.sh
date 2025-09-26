@@ -1,79 +1,80 @@
 #!/bin/bash
 
-# Project and Ansible directories   
-PROJECT_DIR="/home/miryan/Documents/projects/odfl/repos/openshift-vsphere-ipi-install"
+# encrypt-secrets.sh
+# Encrypts sensitive files using ansible-vault in a podman container
+# --- Color codes ---
+RED="\033[0;31m"
+GREEN="\033[0;32m"
+YELLOW="\033[0,33m"
+BLUE="\033[0;34m"
+CYAN="\033[0;36m"
+BRIGHTYELLOW="\033[1;93m"
+BRIGHTCYAN="\033[0;96m"
+RESET="\033[0m"
+
+count=0
+
+if [ "${BASH_SOURCE[0]}" != "$0" ]; then
+  echo -e "${RED}ERROR:${RESET} This script must be executed, not sourced."
+  echo -e "Run it like: ${BRIGHTYELLOW}./encrypt-secrets.sh${RESET}"
+  return 1 2>/dev/null || exit 1
+fi  
+
+source ./secrets-handler.sh
+
+PROJECT_DIR="$(pwd)"
 ANSIBLE_DIR="ansible"
 
-# Encrypt pull-secret.json using ansible-vault in a podman container
-PLAIN_TEXT_PULL_SECRET="/runner/all-clusters-resources/pull-secret.json"
-PULL_SECRET="/runnner/project/secrets/lab/pull-secret.json"
-
-# SSH keys
-RSA_KEY="/runner/project/secrets/lab/id_rsa_odfl"
-ED25519_KEY="/runner/project/secrets/lab/id_ed25519_odfl"
-
 # Vault password file
-VAULT_PWD="/runner/all-clusters-resources/vault-password.txt"
+EE_VAULT_PWD="/runner/all-clusters-resources/vault-password.txt"
+HOST_VAULT_PWD="$PROJECT_DIR/all-clusters-resources/vault-password.txt"
 
-# Actions
-ENCRYPT="encrypt"
-VIEW="view"
-DECRYPT="decrypt"
+# Define an array of “items” as: HOST_FILE:EE_FILE
+items=(
+  "$PROJECT_DIR/all-clusters-resources/pull-secret.json:/runner/all-clusters-resources/pull-secret.json"
+  "$PROJECT_DIR/$ANSIBLE_DIR/secrets/lab/id_rsa_odfl:/runner/project/secrets/lab/id_rsa_odfl"
+  "$PROJECT_DIR/$ANSIBLE_DIR/secrets/lab/id_ed25519_odfl:/runner/project/secrets/lab/id_ed25519_odfl"
+  "$PROJECT_DIR/all-clusters-resources/lab/ca-bundle.crt:/runner/all-clusters-resources/lab/ca-bundle.crt"
+  "$PROJECT_DIR/all-clusters-resources/lab/vsphere-password.txt:/runner/all-clusters-resources/lab/vsphere-password.txt"
+)
 
-# Encrypt files using ansible-vault in a podman container
-printf "\nEncrypting files using ansible-vault in a podman container...\n\n"
-printf "Calling... vault_podman %s %s %s %s" $ENCRYPT $PLAIN_TEXT_PULL_SECRET $VAULT_PWD $PULL_SECRET
-vault_podman $ENCRYPT $PLAIN_TEXT_PULL_SECRET $VAULT_PWD $PULL_SECRET
-printf "\nEncrypted file created[%s]: %s\n\n" $PULL_SECRET $(cat $PULL_SECRET)
+echo -e "\n${BRIGHTCYAN}ENCRYPT FILES USING ANSIBLE-VAULT IN A CONTAINER...${RESET}\n"
 
-# rsa key
-printf "Calling... vault_podman %s %s %s" $ENCRYPT $RSA_KEY $VAULT_PWD 
-vault_podman $ENCRYPT $RSA_KEY $VAULT_PWD 
-printf "\nEncrypted file created[%s]: %s\n\n" $RSA_KEY $(cat $RSA_KEY)
+for item in "${items[@]}"; do
+  HOST_FILE="${item%%:*}"  # part before colon
+  EE_FILE="${item##*:}"    # part after colon
 
-# ssh-ed25519 key 
-printf "Calling... vault_podman %s %s %s" $ENCRYPT $ED25519_KEY $VAULT_PWD
-vault_podman $ENCRYPT $ED25519_KEY $VAULT_PWD
-printf "\nEncrypted file created[%s]: %s\n\n" $ED25519_KEY $(cat $ED25519_KEY)
+  echo -e "\n\n${BRIGHTYELLOW}##### $count${RESET}"
+  echo -e "${BRIGHTCYAN}CALLING:${RESET} vault_podman [$ENCRYPT] [$EE_FILE] [$HOST_VAULT_PWD]"
+  echo -e "\t${CYAN}(**If vault operation is successful, file contents will be displayed.${RESET}\n"
 
+  # Run vault_podman
+  if vault_podman "$ENCRYPT" "$EE_FILE" "$EE_VAULT_PWD"; then
+    echo -e "${GREEN}SUCCESS:${RESET} Vault operation for $EE_FILE"
+  else
+    echo -e "${RED}ERROR:${RESET} Vault operation failed for $EE_FILE"
+    ((count++))
+    continue
+  fi
+
+  # Show the resulting file if it exists
+  if [[ -f "$HOST_FILE" ]]; then
+    echo -e "\n${GREEN}View file created(AT REST):${RESET} $HOST_FILE"
+    cat -n "$HOST_FILE"
+  else
+    echo -e "${RED}File not created:${RESET} $HOST_FILE"
+  fi
+  ((count++))
+done
 
 # sanity check for pull-secret.json
-printf "Resources file [$PROJECT_DIR/all-clusters-resources/pull-secret.json] - should not be encrypted\n\n"
-cat $PROJECT_DIR/all-clusters-resources/pull-secret.json
+HOST_PULL_SECRET="$PROJECT_DIR/all-clusters-resources/pull-secret.json"
+echo -e "\n${BRIGHTYELLOW}##### $count ${RESET}"
+echo -e "${BRIGHTCYAN}RESOURCES FILE:${RESET} [$HOST_PULL_SECRET] - should not be encrypted\n"
+if [[ -f "$HOST_PULL_SECRET" ]]; then
+  cat -n "$HOST_PULL_SECRET"
+else
+  echo -e "${RED}File not found:${RESET} $HOST_PULL_SECRET"
+fi
 
-podman run --rm -v ${PROJECT_DIR}/${ANSIBLE_DIR}:/runner/project:Z \
-  registry.redhat.io/ansible-automation-platform-25/ee-supported-rhel9:latest \
-  sh -c "printf \"\nsanity check for folder: ${PROJECT_DIR}/${ANSIBLE_DIR}/secrets\n\" && ls -l ${PROJECT_DIR}/${ANSIBLE_DIR}/secrets/lab"
-
-printf "\nCOMPLETE\n"
-
-
-# Function to run ansible-vault commands in a podman container
-vault_podman() {
-    local action="$1"       # encrypt, decrypt, or view
-    local file="$2"         # path to file
-    local passfile="$3"     # vault password file path
-    local output="$4"       # optional output file
-
-    if [ -n "$output" ]; then
-        podman run --rm \
-          -v ${PROJECT_DIR}/${ANSIBLE_DIR}:/runner/project:Z \
-          -v ${PROJECT_DIR}/all-clusters-resources:/runner/all-clusters-resources:Z \
-          -v ${PROJECT_DIR}/${ANSIBLE_DIR}/secrets/lab :/runner/project/secrets/lab:Z \
-          -v ~/.ansible:/home/runner/.ansible:Z \
-          registry.redhat.io/ansible-automation-platform-25/ee-supported-rhel9:latest \
-            sh -c "ansible-vault ${action} ${file} \
-                  --vault-password-file=${passfile} \
-                  --output /runner/project/${output}"
-    else
-        podman run --rm \
-          -v ${PROJECT_DIR}/${ANSIBLE_DIR}:/runner/project:Z \
-          -v ${PROJECT_DIR}/all-clusters-resources:/runner/all-clusters-resources:Z \
-          -v ${PROJECT_DIR}/${ANSIBLE_DIR}/secrets/lab :/runner/project/secrets/lab:Z \
-          -v ~/.ansible:/home/runner/.ansible:Z \
-          registry.redhat.io/ansible-automation-platform-25/ee-supported-rhel9:latest \
-            sh -c "ansible-vault ${action} ${file} \
-                  --vault-password-file=${passfile}"
-    fi
-}
-
+echo -e "\n${GREEN}COMPLETE${RESET}\n"

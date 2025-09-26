@@ -10,4 +10,11 @@ init-playbook*.json
 tests/*.json
 *.log
 context/*
+*.out
 .vault_pass
+*.tgz
+00-ocp-test/install-dir
+**/archive/
+*.backup
+*(copy)*
+*-spec.cfg

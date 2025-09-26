@@ -1,7 +1,8 @@
 #!/bin/bash
 
-# decrypt-secrets.sh
-# Encrypts sensitive files using ansible-vault in a podman container
+# view-secrets.sh
+# Views sensitive files using ansible-vault in a podman container with color feedback
+
 # --- Color codes ---
 RED="\033[0;31m"
 GREEN="\033[0;32m"
@@ -16,7 +17,7 @@ count=0
 
 if [ "${BASH_SOURCE[0]}" != "$0" ]; then
   echo -e "${RED}ERROR:${RESET} This script must be executed, not sourced."
-  echo -e "Run it like: ${BRIGHTYELLOW}./decrypt-secrets.sh${RESET}"
+  echo -e "Run it like: ${BRIGHTYELLOW}./view-secrets.sh${RESET}"
   return 1 2>/dev/null || exit 1
 fi  
 
@@ -38,18 +39,19 @@ items=(
   "$PROJECT_DIR/all-clusters-resources/lab/vsphere-password.txt:/runner/all-clusters-resources/lab/vsphere-password.txt"
 )
 
-echo -e "\n${BRIGHTCYAN}DECRYPT FILES USING ANSIBLE-VAULT IN A CONTAINER...${RESET}\n"
+echo -e "\n${BRIGHTCYAN}VIEW FILES USING ANSIBLE-VAULT IN A CONTAINER...${RESET}\n"
+
 
 for item in "${items[@]}"; do
   HOST_FILE="${item%%:*}"  # part before colon
   EE_FILE="${item##*:}"    # part after colon
 
   echo -e "\n\n${BRIGHTYELLOW}##### $count${RESET}"
-  echo -e "${BRIGHTCYAN}CALLING:${RESET} vault_podman [$DECRYPT] [$EE_FILE] [$HOST_VAULT_PWD]"
+  echo -e "${BRIGHTCYAN}CALLING:${RESET} vault_podman [$VIEW] [$EE_FILE] [$HOST_VAULT_PWD]"
   echo -e "\t${CYAN}(**If vault operation is successful, file contents will be displayed.${RESET}\n"
 
   # Run vault_podman
-  if vault_podman "$DECRYPT" "$EE_FILE" "$EE_VAULT_PWD"; then
+  if vault_podman "$VIEW" "$EE_FILE" "$EE_VAULT_PWD"; then
     echo -e "${GREEN}SUCCESS:${RESET} Vault operation for $EE_FILE"
   else
     echo -e "${RED}ERROR:${RESET} Vault operation failed for $EE_FILE"
@@ -70,7 +72,7 @@ done
 # sanity check for pull-secret.json
 HOST_PULL_SECRET="$PROJECT_DIR/all-clusters-resources/pull-secret.json"
 echo -e "\n${BRIGHTYELLOW}##### $count ${RESET}"
-echo -e "${BRIGHTCYAN}RESOURCES FILE:${RESET} [$HOST_PULL_SECRET] - should not be decrypted\n"
+echo -e "${BRIGHTCYAN}RESOURCES FILE:${RESET} [$HOST_PULL_SECRET] - should not be encrypted\n"
 if [[ -f "$HOST_PULL_SECRET" ]]; then
   cat -n "$HOST_PULL_SECRET"
 else
