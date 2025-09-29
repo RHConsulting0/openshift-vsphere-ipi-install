@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # decrypt-secrets.sh
-# Encrypts sensitive files using ansible-vault in a podman container
+# Decrypts sensitive files using ansible-vault in a podman container  # CORRECTED
 # --- Color codes ---
 RED="\033[0;31m"
 GREEN="\033[0;32m"
@@ -12,6 +12,36 @@ BRIGHTYELLOW="\033[1;93m"
 BRIGHTCYAN="\033[0;96m"
 RESET="\033[0m"
 
+# Show usage if help requested
+show_usage() {
+    echo "Usage: $0"
+    echo ""
+    echo "Decrypts sensitive files using ansible-vault in a Podman container"
+    echo ""
+    echo "WARNING: Creates unencrypted copies of sensitive files on filesystem"
+    echo "Use only in secure environments and clean up afterwards"
+    echo ""
+    echo "Files processed:"
+    echo "  • SSH private keys (RSA and Ed25519)"
+    echo "  • SSL certificates and CA bundles"
+    echo "  • vSphere authentication credentials"
+    echo "  • Pull secret verification"
+    echo ""
+    echo "Prerequisites:"
+    echo "  • secrets-handler.sh in same directory"
+    echo "  • vault-password.txt file"
+    echo "  • Podman container runtime"
+    echo ""
+    echo "Use -h, --help, or help for detailed information"
+}
+
+case "${1:-}" in
+    -h|--help|help)
+        show_usage
+        exit 0
+        ;;
+esac
+
 count=0
 
 if [ "${BASH_SOURCE[0]}" != "$0" ]; then
@@ -19,6 +49,8 @@ if [ "${BASH_SOURCE[0]}" != "$0" ]; then
   echo -e "Run it like: ${BRIGHTYELLOW}./decrypt-secrets.sh${RESET}"
   return 1 2>/dev/null || exit 1
 fi  
+
+count=0
 
 source ./secrets-handler.sh
 

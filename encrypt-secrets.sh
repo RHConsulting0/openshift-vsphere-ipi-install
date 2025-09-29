@@ -1,7 +1,10 @@
 #!/bin/bash
 
+#!/bin/bash
+
 # encrypt-secrets.sh
 # Encrypts sensitive files using ansible-vault in a podman container
+
 # --- Color codes ---
 RED="\033[0;31m"
 GREEN="\033[0;32m"
@@ -12,6 +15,40 @@ BRIGHTYELLOW="\033[1;93m"
 BRIGHTCYAN="\033[0;96m"
 RESET="\033[0m"
 
+# Show usage if help requested
+show_usage() {
+    echo "Usage: $0"
+    echo ""
+    echo "Encrypts sensitive files using ansible-vault in a Podman container"
+    echo ""
+    echo "WARNING: This will OVERWRITE plaintext files with encrypted versions"
+    echo "Make sure to backup plaintext files if needed before running"
+    echo ""
+    echo "Files encrypted:"
+    echo "  • SSH private keys (RSA and Ed25519)"
+    echo "  • SSL certificates and CA bundles"
+    echo "  • vSphere authentication credentials"
+    echo "  • Pull secret remains unencrypted (verification only)"
+    echo ""
+    echo "Prerequisites:"
+    echo "  • secrets-handler.sh in same directory"
+    echo "  • vault-password.txt file"
+    echo "  • Podman container runtime"
+    echo "  • Plaintext source files in expected locations"
+    echo ""
+    echo "After encryption, files are safe for version control storage"
+    echo "Use decrypt-secrets.sh or view-secrets.sh to access content"
+    echo ""
+    echo "Use -h, --help, or help for detailed information"
+}
+
+case "${1:-}" in
+    -h|--help|help)
+        show_usage
+        exit 0
+        ;;
+esac
+
 count=0
 
 if [ "${BASH_SOURCE[0]}" != "$0" ]; then
@@ -19,6 +56,8 @@ if [ "${BASH_SOURCE[0]}" != "$0" ]; then
   echo -e "Run it like: ${BRIGHTYELLOW}./encrypt-secrets.sh${RESET}"
   return 1 2>/dev/null || exit 1
 fi  
+
+count=0
 
 source ./secrets-handler.sh
 

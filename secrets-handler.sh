@@ -4,7 +4,7 @@
 # Processes sensitive files using ansible-vault in a podman container
 
 # Project and Ansible directories   
-PROJECT_DIR="/home/miryan/Documents/projects/odfl/repos/openshift-vsphere-ipi-install"
+PROJECT_DIR="$(pwd)"
 ANSIBLE_DIR="ansible"
 
 # Encrypt pull-secret.json using ansible-vault in a podman container
