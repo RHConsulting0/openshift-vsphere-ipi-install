@@ -1,3 +1,0 @@
-- op: replace
-  path: /spec/jobTemplate/spec/template/spec/containers/0/image
-  value: "quay-registry.apps.ocp_cluster_name.domain.org/openshift4/ose-cli:latest"

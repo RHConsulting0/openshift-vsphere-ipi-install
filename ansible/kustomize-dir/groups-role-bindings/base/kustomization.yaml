@@ -1,7 +1,0 @@
-kind: Kustomization
-apiVersion: kustomize.config.k8s.io/v1beta1
-
-# Default groups and user config.
-# Add new yaml files for additional rolebindings as necessary
-resources:
-  - cluster-name-group-rolebinding.yaml
