@@ -7,6 +7,7 @@
 ###
 
 BASE_DIR=/home/miryan/Documents/projects/odfl/repos/openshift-vsphere-ipi-install/automation-ee
+
 PAH=pah.client.example.com
 EE_NAME=ocp-provision-ee
 EE_VERSION=1.0
