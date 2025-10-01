@@ -1,10 +1,6 @@
 cluster: "lab"                # used in Argo CD, jinja2 templates, 
 # cluster_abr: "LAB"          # used in Argo CD paths - this will be handled in GitOps later
 
-# OpenShift installer settings
-openshift_install:
-  log_level: debug          #  (e.g. "debug | info | warn | error") (default "info")
-
 # secrets and keys
 pull_secret_json_file: "/runner/all-clusters-resources/pull-secret.json"
 ssh_pub_file: "/runner/project/secrets/lab/id_ed25519_odfl.pub"
@@ -19,9 +15,9 @@ secrets: "{{ lookup ('file', secrets_yaml_file) | from_yaml }}"
 
 # ODFL environment
 proxy_config:
-  httpProxy: "http://customer.com:8080"
-  httpsProxy: "http://customer.com:8080"
-  noProxy: "customer.com"
+  http_proxy: "http://customer.com:8080"
+  https_proxy: "http://customer.com:8080"
+  no_proxy: "customer.com"
 additional_trust_bundle_policy: "Always"
 
 
@@ -85,6 +81,26 @@ vmconfig:
     ram: 32768
     disk: 120
     core: 5
+
+
+# OpenShift installer settings
+# DEPRECATED - use ocp_install settings below
+openshift_install:
+  log_level: debug          #  (e.g. "debug | info | warn | error") (default "info")
+
+# OpenShift install/monitoring/verification settings
+ocp_install:
+  log_level: debug          #  (e.g. "debug | info | warn | error") (default "info")
+  monitor:
+    max_wait_time: 60   # in minutes
+    check_interval: 60  # in seconds
+    api_timeout: 300    # in seconds (5m)
+  verify:
+    kubeconfig_path: "{{ install_dir }}/auth/kubeconfig"
+    openshift_install_binary: "/usr/local/bin/openshift-install"
+
+
+
 
 #group_sync_cluster:
 #  usersQuery:
