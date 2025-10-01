@@ -71,8 +71,8 @@ platform:
       zone: {{ platform.vsphere.failureDomains.zone | default('generated-zone') }}
     vcenters:
     - datacenters:
-{% for dc in datacenters | default(['DC1-Chicago']) %}
-      - {{ vcenter.datacenter }}
+{% for dc in platform_vsphere.vcenters.datacenters | default(['DC1-Chicago']) %}
+      - {{ dc }}
 {% endfor %}
       password: {{ secrets.vspherePassword | default('password') }}
       port: {{ platform_vsphere.vcenters.port | default(443) }}
