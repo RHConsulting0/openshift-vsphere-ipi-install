@@ -3,52 +3,37 @@
 K8S_AUTH_SSL_CA_CERT: /etc/ssl/certs/ca-bundle.crt
 
 # Used for ldap and API cert configs
-catalog_dir: "{{ playbook_dir }}/kustomize-dir"
+# catalog_dir: "{{ playbook_dir }}/kustomize-dir"
 
-chrony_server_list:
-  - 10.1.7.125
+#chrony_server_list:
+#  - 10.1.7.125
 
 # OpenShift installer settings
-openshift_install:
-  log_level: debug                       #  (e.g. "debug | info | warn | error") (default "info")
-
-install_config:
-  ocp_install_ver: 4.18.23
-  base_domain: base-domain.com
-  # Change IP's per customer
-  network:
-    cluster_network:
-      cidr: 10.128.0.0/14
-    service_network: 172.30.0.0/16
-    machine_network: 10.7.0.0/16
+#openshift_install:
+#  log_level: debug                       #  (e.g. "debug | info | warn | error") (default "info")
 
 # Update with customer info
-group_sync:
-  ns: ldap-sync
-  sync_config_url: ldaps://ldap.url.domain.org:636
-  usersQuery:
-    baseDN: "DC=domain,DC=org"
-  groupsQuery:
-    baseDN: "OU=DomainOU,DC=domain,DC=org"
+# group_sync:
+#   ns: ldap-sync
+#   sync_config_url: ldaps://ldap.url.domain.org:636
+#   usersQuery:
+#     baseDN: "DC=domain,DC=org"
+#   groupsQuery:
+#     baseDN: "OU=DomainOU,DC=domain,DC=org"
 
-operatorhub:
-  operator_source: redhat-operators
-  ocp_main_ver: 4.12
+# operatorhub:
+#   operator_source: redhat-operators
+#   ocp_main_ver: 4.12
 
-# Quay configs if using internal Quay
-quay_registry_name: quay-registry-name
-quay_app_name: quay-app
-quay_registry_url: "{{ quay_registry_name }}.{{ install_config.base_domain }}"
+# storage:
+#   storageclass: vmwarelvs
 
-storage:
-  storageclass: vmwarelvs
+# ca_bundle_crt: |
+#     -----BEGIN CERTIFICATE-----
+#     CA_BUNDLE_CRT_STUFF
+#     -----END CERTIFICATE-----
 
-ca_bundle_crt: |
-    -----BEGIN CERTIFICATE-----
-    CA_BUNDLE_CRT_STUFF
-    -----END CERTIFICATE-----
-
-quay_crt: |
-    -----BEGIN CERTIFICATE-----
-    QUAY_CERT
-    -----END CERTIFICATE-----
+# quay_crt: |
+#     -----BEGIN CERTIFICATE-----
+#     QUAY_CERT
+#     -----END CERTIFICATE-----

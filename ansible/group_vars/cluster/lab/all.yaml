@@ -1,5 +1,5 @@
-cluster: "lab"
-cluster_abr: "LAB"
+cluster: "lab"                # used in Argo CD, jinja2 templates, 
+# cluster_abr: "LAB"          # used in Argo CD paths - this will be handled in GitOps later
 
 # OpenShift installer settings
 openshift_install:
@@ -51,9 +51,18 @@ platform_vsphere:
     server: "dc1-p-a-vcenter1.corp.yyzz.com"
     user: "corp\\svccldvm01"
 
-  
-install_config_cluster:
+
+install_config:
   cluster_name: ocp-cluster-name-here
+  ocp_install_ver: 4.18.23
+  base_domain: base-domain.com
+  # Change IP's per customer
+  network:
+    cluster_network:
+      cidr: 10.128.0.0/14
+    service_network: 172.30.0.0/16
+    machine_network: 10.7.0.0/16
+
 
 vmconfig:
   master:
@@ -77,15 +86,15 @@ vmconfig:
     disk: 120
     core: 5
 
-group_sync_cluster:
-  usersQuery:
-    filter: "&(|(Customer-Provided-Filter,DC=org))"
-  whitelist: |
-    Customer-Provided-whitelist
+#group_sync_cluster:
+#  usersQuery:
+#    filter: "&(|(Customer-Provided-Filter,DC=org))"
+#  whitelist: |
+#    Customer-Provided-whitelist
 
 # Optional network policies
-network_policy:
-  egress_cidr: "10.#.#.0/24"
+#network_policy:
+#  egress_cidr: "10.#.#.0/24"
 
 # # Secrets (use Ansible Vault for these)
 # pull_secret: "{{ vault_pull_secret }}"

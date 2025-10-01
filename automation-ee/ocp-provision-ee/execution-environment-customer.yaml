@@ -41,6 +41,7 @@ additional_build_steps:
     RUN curl -k <url file location> -o /usr/share/pki/ca-trust-source/anchors/<value> && \
         curl -k <url file location> -o /usr/share/pki/ca-trust-source/anchors/<value> && \
         update-ca-trust extract
+  # get vsphere certs here
   prepend_galaxy: |
     ADD _build/configs/ansible.cfg ${HOME}/.ansible.cfg
     RUN curl -k <url file location> -o /usr/share/pki/ca-trust-source/anchors/<value> && \

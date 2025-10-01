@@ -35,7 +35,7 @@ controlPlane:
         diskSizeGB: {{ vmconfig.control_plane.disk_size_gb | default(120) }}
   replicas: {{ vmconfig.control_plane.replicas | default(3) }}
 metadata:
-  name: {{ install_config_cluster.cluster_name }}
+  name: {{ install_config.cluster_name }}
 networking:
   clusterNetwork:
   - cidr: {{ install_config.network.cluster_network.cidr | default('10.128.0.0/14') }}
