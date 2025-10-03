@@ -15,9 +15,9 @@ secrets: "{{ lookup ('file', secrets_yaml_file) | from_yaml }}"
 
 # ODFL environment
 proxy_config:
-  http_proxy: "http://customer.com:8080"
-  https_proxy: "http://customer.com:8080"
-  no_proxy: "customer.com"
+  http_proxy: "http://group-vars-customer.com:8080"
+  https_proxy: "http://groups-vars-customer.com:8080"
+  no_proxy: "group-vars-customer.com"
 additional_trust_bundle_policy: "Always"
 
 
@@ -49,9 +49,9 @@ platform_vsphere:
 
 
 install_config:
-  cluster_name: ocp-cluster-name-here
+  cluster_name: cluster-9gzgf
   ocp_install_ver: 4.18.23
-  base_domain: base-domain.com
+  base_domain: dynamic.redhatworkshops.io
   # Change IP's per customer
   network:
     cluster_network:
@@ -59,14 +59,16 @@ install_config:
     service_network: 172.30.0.0/16
     machine_network: 10.7.0.0/16
 
-
+# VM configuration
 vmconfig:
   master:
+    replicas: 3
     cpu: 8
     ram: 24576
     disk: 120
     core: 4
   worker:
+    replicas: 3  
     cpu: 24
     ram: 122880
     disk: 120
@@ -81,6 +83,19 @@ vmconfig:
     ram: 32768
     disk: 120
     core: 5
+
+# Validation settings
+validation:
+  node_retries: 10                             # number of retries for node count check    
+  node_delay: 15                           # delay between retries for node count check (in seconds)
+  api_retries: 20                         # number of retries for API availability check
+  api_delay: 30                         # delay between retries for API availability check (in seconds)
+  installer_retries: 30                # number of retries for installer completion check
+  installer_delay: 60             # delay between retries for installer completion check (in seconds)
+  cluster_operators_retries: 30     # number of retries for cluster operators check
+  cluster_operators_delay: 60   # delay between retries for cluster operators check (in seconds)
+  expected_nodes: "{{ (vmconfig.master.replicas | default(3)) + (vmconfig.worker.replicas | default(2)) }}"
+
 
 
 # OpenShift installer settings
@@ -142,7 +157,3 @@ ocp_install:
 #   -----END CERTIFICATE-----
 # additional_trust_bundle: |
 #   {{ vault_trust_bundle }}
-
-
-
-

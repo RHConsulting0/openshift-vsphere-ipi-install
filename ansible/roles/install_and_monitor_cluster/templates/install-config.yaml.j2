@@ -1,0 +1,87 @@
+#jinja2: trim_blocks: True, lstrip_blocks: True
+apiVersion: v1
+baseDomain: {{ install_config.base_domain | default('default-base-doman.com') }}
+{% if proxy_config is defined %}
+proxy:
+  httpProxy: {{ proxy_config.http_proxy | default('http://default-customer.com:8080') }}
+  httpsProxy: {{ proxy_config.https_proxy | default('http://default-customer.com:8080') }}
+  noProxy: {{ proxy_config.no_proxy | default('default-customer.com') }}
+{% endif %}
+{%- if secrets.caBundle is defined %}
+additionalTrustBundle: |
+{{ secrets.caBundle | indent(4, true) }}
+{%- endif %}
+additionalTrustBundlePolicy: {{ additional_trust_bundle_policy | default('Always') }}
+compute:
+- architecture: {{ vmconfig.compute_architecture | default('amd64') }}
+  hyperthreading: {{ vmconfig.compute_hyperthreading | default('Enabled') }}
+  name: worker
+  platform:
+    vsphere:
+      cpus: {{ vmconfig.compute_cpus | default(16) }}
+      memoryMB: {{ vmconfig.compute.ram | default(32768) }}
+      osDisk:
+        diskSizeGB: {{ vmconfig.compute.disk_size_gb | default(120) }}
+  replicas: {{ vmconfig.compute.replicas | default(2) }}
+controlPlane:
+  architecture: {{ vmconfig.control_plane_architecture | default('amd64') }}
+  hyperthreading: {{ vmconfig.control_plane_hyperthreading | default('Enabled') }}
+  name: master
+  platform:
+    vsphere:
+      cpus: {{ vmconfig.control_plane_cpus | default(16) }}
+      memoryMB: {{ vmconfig.control_plane.ram | default(40960) }}
+      osDisk:
+        diskSizeGB: {{ vmconfig.control_plane.disk_size_gb | default(120) }}
+  replicas: {{ vmconfig.control_plane.replicas | default(3) }}
+metadata:
+  name: {{ install_config.cluster_name }}
+networking:
+  clusterNetwork:
+  - cidr: {{ install_config.network.cluster_network.cidr | default('10.128.0.0/14') }}
+    hostPrefix: {{ install_config.network.cluster_network.host_prefix | default(23) }}
+  machineNetwork:
+  - cidr: {{ install_config.network.machine_network }}
+  networkType: {{ network_type | default('OVNKubernetes') }}
+  serviceNetwork:
+  - {{ install_config.network.service_network | default('172.30.0.0/16') }}
+platform:
+  vsphere:
+    apiVIPs:
+{% for api_vip in platform_vsphere.api_vips %}
+    - {{ api_vip }}
+{% endfor %}
+    ingressVIPs:
+{% for ingress_vip in platform_vsphere.ingress_vips %}
+    - {{ ingress_vip }}
+{% endfor %}
+    failureDomains:
+    - name: {{ install_config.failure_domains.name | default('generated-failure-domain') }}
+      region: {{ install_config.failure_domains.region | default('generated-region') }}
+      server: {{ install_config.failure_domains.vcenter_server | default('dc1-p-a-vcenter1.corp.company.com') }}
+      topology:
+        computeCluster: {{ install_config.failure_domains.compute_cluster | default('/DC1-Chicago/host/DC1-ESX-LINUX-NONPROD-CLUSTER1') }}
+        datacenter: {{ install_config.failure_domains.datacenter | default('DC1-Chicago') }}
+        datastore: {{ install_config.failure_domains.datastore | default('/DC1-Chicago/datastore/DC1-NFS01-ESX-REDHAT-NONPROD-DS1') }}
+        networks:
+{% for network in platform_vsphere.failure_domain.topology.networks | default(['QA-LINUX-NONPROD']) %}
+        - {{ network }}
+{% endfor %}
+        resourcePool: {{ resource_pool | default('/DC1-Chicago/host/DC1-ESX-LINUX-NONPROD-CLUSTER1/Resources') }}
+      zone: {{ platform.vsphere.failureDomains.zone | default('generated-zone') }}
+    vcenters:
+    - datacenters:
+{% for dc in platform_vsphere.vcenters.datacenters | default(['DC1-Chicago']) %}
+      - {{ dc }}
+{% endfor %}
+      password: {{ secrets.vspherePassword | default('password') }}
+      port: {{ platform_vsphere.vcenters.port | default(443) }}
+      server: {{ platform_vsphere.vcenters.server | default('dc1-p-a-vcenter1.corp.company.com') }}
+      user: {{ platform_vsphere.vcenters.user | default('corp\\svccldvm01') }}
+publish: {{ publish_type | default('External') }}
+{% if secrets.pullSecret is defined %}
+pullSecret: '{{ secrets.pullSecret | from_json | to_json }}'
+{% endif -%}
+{% if secrets.sshKey is defined %}
+sshKey: "{{ secrets.sshKey }}"
+{% endif -%}

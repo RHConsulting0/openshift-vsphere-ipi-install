@@ -1,0 +1,1 @@
+{"clusterName":"ocp-cluster-name-here","clusterID":"9b1f90c9-2968-4ef0-a256-3ac992a51f1a","infraID":"ocp-cluster-name-here-g248m","vsphere":{"terraform_platform":"vsphere","VCenters":[{"vCenter":"dc1-p-a-vcenter1.corp.company.com","username":"corp\\svccldvm01","password":"vSpherePassword"}]},"featureSet":"","customFeatureSet":null}

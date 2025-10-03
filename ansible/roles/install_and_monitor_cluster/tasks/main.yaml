@@ -1,0 +1,376 @@
+---
+- name: Ensure openshift-install exists on host with version 4.18
+  block:
+    - name: Check for openshift-install
+      ansible.builtin.stat:
+        path: "/usr/local/bin/openshift-install"
+      register: ocs_install
+
+    - name: Fail if ocs_install does not exist
+      ansible.builtin.fail:
+        msg:
+          - "Openshift install command is not installed"
+          - "Please install at least version 4.18.x"
+      when: ocs_install is not defined
+
+- name: Clean up existing install-dir
+  ansible.builtin.file:
+    path: "{{ playbook_dir }}/install-dir"
+    state: absent
+
+- name: Create bin, install-dir and downloads folders
+  ansible.builtin.file:
+    path: "{{ playbook_dir }}/install-dir"
+    state: directory
+    mode: '0755'
+
+- name: Create install-config file from template
+  ansible.builtin.template:
+    src: "{{ playbook_dir }}/roles/initialize_cluster/templates/install-config.yaml.j2"
+    dest: "{{ playbook_dir }}/install-dir/install-config.yaml"
+    mode: '0644'
+
+- name: Backup the install-config.yaml file
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/install-dir/install-config.yaml"
+    dest: "{{ playbook_dir }}/install-dir/install-config.yaml.orig"
+    mode: '0664'
+
+# MOCK TEST - REMOVE LATER - copy the auth folder into the install-dir
+- name: Copy auth folder into the install-dir folder
+  ansible.builtin.copy:
+    src: "/runner/provisioned-clusters/lab/auth"
+    dest: "{{ playbook_dir }}/install-dir"
+    remote_src: true
+    mode: '0644'
+    directory_mode: '0755'
+
+- name: Display installation configuration
+  ansible.builtin.debug:
+    msg: "Installation configuration created for cluster: {{ install_config.cluster_name }}"
+
+# Task commented to implement async install with monitoring and verification
+# DEPRECATED - use async install with monitoring and verification below
+
+# - name: Initialize IPI Cluster installation
+#   ansible.builtin.command: >-
+#     /usr/local/bin/openshift-install create cluster
+#     --dir={{ playbook_dir }}/install-dir
+#     --log-level={{ openshift_install.log_level }}"
+#   changed_when: false
+
+# #################################
+# initialize_cluster role ends here
+# #################################
+
+# New section to run install asynchronously
+
+# ** UNCOMMENT THE FOLLOWING BLOCK TO ENABLE ASYNC INSTALL WITH MONITORING AND VERIFICATION - WHEN TESTING IS COMPLETE
+
+# - name: Start OpenShift cluster installation
+#   block:
+#     - name: Initialize cluster installation
+#       ansible.builtin.command: >-
+#         /usr/local/bin/openshift-install create cluster
+#         --dir={{ playbook_dir }}/install-dir
+#         --log-level={{ ocp_install.log_level }}
+#       register: install_start
+#       async: "{{ ocp_install.monitor.max_wait_time }}"
+#       poll: 0
+#       changed_when: true
+
+#     - name: Display installation start message
+#       ansible.builtin.debug:
+#         msg: "OpenShift cluster installation started. Process ID: {{ install_start.ansible_job_id }}"
+
+
+- name: Start OpenShift cluster installation MOCK TEST
+  block:
+    - name: Initialize cluster installation
+      ansible.builtin.command: >-
+        /usr/local/bin/openshift-install create manifests
+        --dir={{ playbook_dir }}/install-dir
+        --log-level={{ ocp_install.log_level }}
+      register: install_start
+      async: "{{ ocp_install.monitor.max_wait_time }}"
+      poll: 0
+      changed_when: true
+
+    - name: Display installation start message
+      ansible.builtin.debug:
+        msg: "OpenShift cluster installation MOCK TEST started. Process ID: {{ install_start.ansible_job_id }}"
+
+# Monitoring section
+- name: Monitor installation progress
+  block:
+    - name: Wait for installation to complete
+      ansible.builtin.async_status:
+        jid: "{{ install_start.ansible_job_id }}"
+      register: install_status
+      until: install_status.finished
+      retries: "{{ (ocp_install.monitor.max_wait_time / ocp_install.monitor.check_interval) | int }}"
+      delay: "{{ ocp_install.monitor.check_interval }}"
+
+    - name: Check installation result
+      ansible.builtin.assert:
+        that:
+          - install_status.finished
+          - install_status.rc == 0
+        fail_msg: "OpenShift installation failed. Check logs for details."
+        success_msg: "OpenShift installation completed successfully."
+
+# TODO Display installation completion time - verify elapsed is a varible in install_status
+    - name: Display installation completion
+      ansible.builtin.debug:
+        msg: "Cluster installation completed in {{ install_status.elapsed | default('N/A') }} seconds"
+
+# Verification section
+- name: Validate cluster installation
+  block:
+    - name: Wait for kubeconfig file to be created
+      ansible.builtin.wait_for:
+        path: "{{ ocp_install.verify.kubeconfig_path }}"
+        timeout: "{{ ocp_install.monitor.api_timeout }}"
+
+    - name: Verify kubeconfig file exists
+      ansible.builtin.stat:
+        path: "{{ ocp_install.verify.kubeconfig_path }}"
+      register: kubeconfig_stat
+
+    - name: Fail if kubeconfig not found
+      ansible.builtin.fail:
+        msg: "kubeconfig file not found at {{ ocp_install.verify.kubeconfig_path }}"
+      when: not kubeconfig_stat.stat.exists
+
+    - name: Read kubeconfig content
+      ansible.builtin.slurp:
+        src: "{{ ocp_install.verify.kubeconfig_path }}"
+      register: kubeconfig_content
+
+    - name: Set kubeconfig content as fact
+      ansible.builtin.set_fact:
+        kubeconfig_data: "{{ kubeconfig_content.content | b64decode }}"
+
+    - name: Display kubeconfig location
+      ansible.builtin.debug:
+        msg: "kubeconfig file available at: {{ ocp_install.verify.kubeconfig_path }}"
+
+# Validate cluster connectivity
+- name: Validate cluster connectivity
+  block:
+    - name: Test cluster API connectivity
+      ansible.builtin.command: >
+        {{ ocp_install.verify.openshift_install_binary }} wait-for bootstrap-complete
+        --dir={{ playbook_dir }}/install-dir
+        --log-level={{ ocp_install.log_level }}
+      register: bootstrap_wait
+      retries: "{{ validation.api_retries }}"
+      delay: "{{ validation.api_delay }}"
+      until: bootstrap_wait.rc == 0
+      changed_when: false
+
+    - name: Wait for cluster to be ready
+      ansible.builtin.command: >
+        {{ ocp_install.verify.openshift_install_binary }} wait-for install-complete
+        --dir={{ playbook_dir }}/install-dir
+        --log-level={{ ocp_install.log_level }}
+      register: install_wait
+      retries: "{{ validation.installer_retries }}"
+      delay: "{{ validation.installer_delay }}"
+      until: install_wait.rc == 0
+      changed_when: false
+
+    - name: Display cluster readiness
+      ansible.builtin.debug:
+        msg: "Cluster is ready for use"
+  when: kubeconfig_stat.stat.exists | default(false)
+
+- name: Gather cluster information
+  block:
+    - name: Get cluster admin credentials
+      ansible.builtin.slurp:
+        src: "{{ playbook_dir }}/install-dir/auth/kubeadmin-password"
+      register: kubeadmin_password
+
+    - name: Set kubeadmin password as fact
+      ansible.builtin.set_fact:
+        kubeadmin_password_data: "{{ kubeadmin_password.content | b64decode | trim }}"
+
+    - name: Get cluster console URL
+      ansible.builtin.slurp:
+        src: "{{ playbook_dir }}/install-dir/auth/kubeconfig"
+      register: console_kubeconfig
+
+    - name: Extract console URL from kubeconfig
+      ansible.builtin.set_fact:
+        console_url: "https://console-openshift-console.apps.{{ install_config.cluster_name }}.{{ install_config.base_domain }}"
+
+    - name: Display cluster access information
+      ansible.builtin.debug:
+        msg:
+          - "Cluster Name: {{ install_config.cluster_name }}"
+          - "Console URL: {{ console_url }}"
+          - "API URL: https://api.{{ install_config.cluster_name }}.{{ install_config.base_domain }}:6443"
+          - "kubeconfig: {{ ocp_install.verify.kubeconfig_path }}"
+          - "kubeadmin password: {{ kubeadmin_password_data }}"
+
+- name: Validate cluster nodes
+  block:
+    - name: Set KUBECONFIG environment variable
+      ansible.builtin.set_fact:
+        ansible_env:
+          KUBECONFIG: "{{ ocp_install.verify.kubeconfig_path }}"
+
+    - name: Wait for nodes to be ready
+      ansible.builtin.command:
+        cmd: oc get nodes -o json
+      register: node_list
+      retries: "{{ validation.node_retries | default(10) }}"
+      delay: "{{ validation.node_delay | default(15) }}"
+      until: >-
+        (node_list.stdout | from_json |
+        json_query("items[?status.conditions[?type=='Ready'].status | [0]=='True']") |
+        length) >= validation.expected_nodes
+      changed_when: false
+      failed_when: node_list.rc != 0
+
+
+    # - name: Wait for nodes to be ready
+    #   ansible.builtin.command: >
+    #     oc get nodes -o json
+    #   register: node_list
+    #   retries: "{{ validation.node_retries | default(10) }}"
+    #   delay: "{{ validation.node_delay | default(15) }}"
+    #   until: >
+    #     (
+    #       node_list.stdout | from_json | json_query("items[?status.conditions[?type=='Ready'].status | [0]=='True']") | length
+    #     ) >= validation.expected_nodes
+    #   changed_when: false
+
+    - name: Set node_count fact
+      ansible.builtin.set_fact:
+        node_count: "{{ node_list.stdout_lines | select('search', ' Ready ') | list | length }}"
+
+    - name: Get node status
+      ansible.builtin.command: >
+        oc get nodes -o wide
+      register: node_status
+      changed_when: false
+
+    - name: Display node information
+      ansible.builtin.debug:
+        msg: "{{ node_status.stdout_lines }}"
+
+    - name: Verify all nodes are ready
+      ansible.builtin.set_fact:
+        not_ready_count: "{{ node_list.stdout_lines | reject('search', ' Ready ') | list | length }}"
+
+    - name: Fail if nodes are not ready
+      ansible.builtin.fail:
+        msg: "Some nodes are not ready. Check cluster status."
+      when: not_ready_count > 0
+
+    - name: Validate cluster operators
+      block:
+        - name: Wait for cluster operators to be available
+          ansible.builtin.command: >
+            oc get clusteroperators --no-headers
+          register: operator_list
+          retries: "{{ validation.cluster_operators_retries }}"
+          delay: "{{ validation.cluster_operators_delay }}"
+          until: (operator_list.stdout_lines | reject('search', ' Available ') | list | length) == 0
+          changed_when: false
+
+        - name: Get cluster operator status
+          ansible.builtin.command: >
+            oc get clusteroperators
+          register: operators
+          changed_when: false
+
+        - name: Display cluster operator status
+          ansible.builtin.debug:
+            msg: "{{ operators.stdout_lines }}"
+
+# Placeholder for GitOps installation
+
+- name: Final validation and summary
+  block:
+    - name: Get cluster version
+      ansible.builtin.command: >
+        oc get clusterversion
+      register: cluster_version
+      changed_when: false
+
+    - name: Display cluster version
+      ansible.builtin.debug:
+        msg: "{{ cluster_version.stdout_lines }}"
+
+    - name: Create installation summary
+      ansible.builtin.set_fact:
+        installation_summary:
+          cluster_name: "{{ install_config.cluster_name }}"
+          base_domain: "{{ install_config.base_domain }}"
+          console_url: "{{ console_url }}"
+          api_url: "https://api.{{ install_config.cluster_name }}.{{ install_config.base_domain }}:6443"
+          kubeconfig_path: "{{ ocp_install.verify.kubeconfig_path }}"
+          kubeadmin_password: "{{ kubeadmin_password_data }}"
+          installation_time: "{{ install_status.elapsed }}"
+          node_count: "{{ node_count.stdout }}"
+          gitops_installed: "{{ install_gitops | default(false) }}"
+
+    - name: Display installation summary
+      ansible.builtin.debug:
+        msg: "{{ installation_summary }}"
+
+    - name: Save installation summary to file
+      ansible.builtin.copy:
+        content: |
+          # OpenShift Cluster Installation Summary
+          Cluster Name: {{ install_config.cluster_name }}
+          Base Domain: {{ install_config.base_domain }}
+          Console URL: {{ console_url }}
+          API URL: https://api.{{ install_config.cluster_name }}.{{ install_config.base_domain }}:6443
+          kubeconfig Path: {{ ocp_install.verify.kubeconfig_path }}
+          kubeadmin Password: {{ kubeadmin_password_data }}
+          Installation Time: {{ install_status.elapsed }} seconds
+          Node Count: {{ node_count.stdout }}
+          GitOps Operator Installed: {{ install_gitops | default(false) }}
+
+          # Access Instructions
+          1. Set KUBECONFIG: export KUBECONFIG={{ ocp_install.verify.kubeconfig_path }}
+          2. Login: oc login -u kubeadmin -p {{ kubeadmin_password_data }}
+          3. Access Console: {{ console_url }}
+          {% if install_gitops %}
+          4. Access ArgoCD: Check gitops-installation-summary.txt for ArgoCD URL
+          {% endif %}
+        dest: "{{ playbook_dir }}/install-dir/installation-summary.txt"
+        mode: '0644'
+
+- name: Handle installation errors
+  block:
+    - name: Clean up on failure
+      ansible.builtin.file:
+        path: "{{ playbook_dir }}/install-dir"
+        state: absent
+      when: install_status.failed | default(false)
+
+    - name: Display error information
+      ansible.builtin.debug:
+        msg: "Installation failed. Check logs in {{ playbook_dir }}/install-dir for details."
+      when: install_status.failed | default(false)
+  rescue:
+    - name: Installation failed - gathering debug information
+      block:
+        - name: Check if install directory exists
+          ansible.builtin.stat:
+            path: "{{ playbook_dir }}/install-dir"
+          register: install_dir_check
+
+        - name: Display installation logs if available
+          ansible.builtin.debug:
+            msg: "Installation failed. Check {{ playbook_dir }}/install-dir/.openshift_install.log for details."
+          when: install_dir_check.stat.exists
+
+        - name: Fail with installation error
+          ansible.builtin.fail:
+            msg: "OpenShift installation failed. Check logs and configuration."

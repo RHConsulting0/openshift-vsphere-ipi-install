@@ -1,0 +1,88 @@
+apiVersion: v1
+baseDomain: base-domain.com
+proxy:
+  httpProxy: http://default-customer.com:8080
+  httpsProxy: http://default-customer.com:8080
+  noProxy: default-customer.com
+additionalTrustBundle: |
+    -----BEGIN CERTIFICATE-----
+    MIIDDTCCAfWgAwIBAgIUTVqm5+7wfxY2bb4STIiYF5lpyEgwDQYJKoZIhvcNAQEL
+    BQAwFjEUMBIGA1UEAwwLZXhhbXBsZS5jb20wHhcNMjUwOTIzMTk0NzQwWhcNMjYw
+    OTIzMTk0NzQwWjAWMRQwEgYDVQQDDAtleGFtcGxlLmNvbTCCASIwDQYJKoZIhvcN
+    AQEBBQADggEPADCCAQoCggEBANXdwBEBJnM2YJVDLU4ke8Y1jGBr4eenjavANkmo
+    N/Dntuos2OmLIbRCGbtLf/oAVUjXtTNclO33ouRepohYD/qysfAuhLaH/gcgwJqQ
+    aVd97nQQ+2U3Voi3/m/21sGApsxJe4nJBzBdlFX8AGHZDqDyikyRXBkWza95TKoB
+    MPc46eZkkJ4jAZal/0SIjvfqboTBsXiG0EyPO2D8+SCIu4jcZ1OlY1kktozw7HDh
+    9u7pmakBT9YG9g5JvrMdSQRoouKgT3qZaBynq2EgGjNj++1MUfQms2B5thezIK0v
+    qvtWhVse9GnCaQzps4Ln5IgIjPfZOO6JZqou5yY29SwcLn8CAwEAAaNTMFEwHQYD
+    VR0OBBYEFMfWulH1pxBuePfORilKDsITOrWRMB8GA1UdIwQYMBaAFMfWulH1pxBu
+    ePfORilKDsITOrWRMA8GA1UdEwEB/wQFMAMBAf8wDQYJKoZIhvcNAQELBQADggEB
+    AEFGa0ltgU/fdO87GXCzCPX1C5mDYI1fV3QogSBDdqyhnRpu5b7PH2vXGi2mHyXF
+    BYx3Ttudiegu+YnqfyWVqe8cBR3zlvJnke4wunbmu42p23v4HPBZVOz47m3O5Atu
+    HOLFTLevjh1atxXJKb0xuY48wGQ0yzVcar41nwcar1XO6Ghp3h+/9eHkHjFPXVxe
+    V9/YnoZgYg/FRkOx8qj+qmMmmJL8oD5GW4FDdIO4NKdCO5+VUpqOugeGOADeq/o9
+    cHs96eC+uHdzMbiJCcTlR9A0okyoBSapxfI5bEVLzGZCdoDqcyjuWjipfOsREN/K
+    nuEL66PkMNA+93bNFGlfieE=
+    -----END CERTIFICATE-----
+additionalTrustBundlePolicy: Always
+compute:
+- architecture: amd64
+  hyperthreading: Enabled
+  name: worker
+  platform:
+    vsphere:
+      cpus: 16
+      memoryMB: 32768
+      osDisk:
+        diskSizeGB: 120
+  replicas: 2
+controlPlane:
+  architecture: amd64
+  hyperthreading: Enabled
+  name: master
+  platform:
+    vsphere:
+      cpus: 16
+      memoryMB: 40960
+      osDisk:
+        diskSizeGB: 120
+  replicas: 3
+metadata:
+  name: ocp-cluster-name-here
+networking:
+  clusterNetwork:
+  - cidr: 10.128.0.0/14
+    hostPrefix: 23
+  machineNetwork:
+  - cidr: 10.7.0.0/16
+  networkType: OVNKubernetes
+  serviceNetwork:
+  - 172.30.0.0/16
+platform:
+  vsphere:
+    apiVIPs:
+    - 10.0.0.0
+    ingressVIPs:
+    - 10.0.0.1
+    failureDomains:
+    - name: generated-failure-domain
+      region: generated-region
+      server: dc1-p-a-vcenter1.corp.company.com
+      topology:
+        computeCluster: /DC1-Chicago/host/DC1-ESX-LINUX-NONPROD-CLUSTER1
+        datacenter: DC1-Chicago
+        datastore: /DC1-Chicago/datastore/DC1-NFS01-ESX-REDHAT-NONPROD-DS1
+        networks:
+        - QA-LINUX-NONPROD
+        resourcePool: /DC1-Chicago/host/DC1-ESX-LINUX-NONPROD-CLUSTER1/Resources
+      zone: generated-zone
+    vcenters:
+    - datacenters:
+      - DC_Name
+      password: vSpherePassword
+      port: 443
+      server: dc1-p-a-vcenter1.corp.company.com
+      user: corp\svccldvm01
+publish: External
+pullSecret: '{"auths": {"quay.io": {"auth": "xyzasqwasazxzaQV0wwN0k2U1hURVYyQVhSMkNF"}, "registry.redhat.io": {"auth": "xyzasqwasazxzapc3RyeS5yZWRoYXQuaW8iOiB7CiAgICAgICJhdXRoIjogImV5SmhiR2NpT2lKU1V6VXhNaUo5LmV5SnpkV0lpT2lJM1pUSTNaR0V3Wm1ReU1XRTBOMkU0WVRJNVlqZzRabUl4TWpabVpEbGhaU0o5LlBlSm1reEdmZHdCczNOZlNhS040Z3k0bUdvZDEtRFJvOU5MenZFVFc5SGZDRGhsMWdFVjNQOUc0YW9pZDJ5NmhrME1qTWduRFBZRUVaaXlUU0VucUNaakktWVFaamZwaHNXWHpieDFoTUZBSXJtNjBqNTgxeFFZcm5RaXRTdlBWTmVhNUwybjN3UVAwa00ybVNvQXNNQzJlcWR6UFpTLVdNS2JJbVBJMVRXdFZGd3ZPNmNoSGxmblhnV1VzNkJycWJldHhOTnd2U0pqTktBLWVQa19JRm1LSi1WaXlGN0kxWnVHbHRvWjdNZ3F0aFlfMjBKbkxSUE5uMnhZcFlGVDM1UFgwWjk4LWM1ODRaMFQ0TGY5UXJ4SUZWWFJORXFFMGpXQUgyRmJKQTdXQmN6VnNyam1DLWwwaTRIRWw3UWNaMXNpbnpDRUFlZVppNTJTbzVidXBzRkVLU2tkNjhpWW45MUJtSHpwYm1xS3MwYTJRUk1SREtuc1VRY1pZX3AtNUQwUXBETWNBVzRHODk4cG1kdkVoTzZzVjBzTmxqS0M5YnVNTWhaZlJsOWZkN1B4XzByTVFpRGc5S1Z5UkNoNWlndGlGemJtcUw3bl9TZURiTWRuWmpUak9CWk0zdkhIWWZENGtwUXV6bmdWN3dGZ3l3QzYxckZzYkoybmUzdldJNDRMbnZVcTEwcC1sMDVjVC0tcXFmTmhOTEhvQkpjMkdabnFRckh1bzhpSlhKU2RxaExGZEFqcW9EZEMyTzVPTkY4TnZLb01jNEZiMXdUZ3h4NkZsd3F0TkhrQjRhTFJjZUlEckVEdTlLblRKTmpOdGhzdnRFYUxOOWxNZlk0OWZLdGZXSXJOTlNEb2NWQVVnT2FQTVhyczJtLWUzX1pOVk5ScjhkSmlyUC1vIgogICAgfQogIH0KfQ=="}, "registry.connect.redhat.io": {"auth": "xyzasqwasazxzapc3RyeS5yZWRoYXQuaW8iOiB7CiAgICAgICJhdXRoIjogImV5SmhiR2NpT2lKU1V6VXhNaUo5LmV5SnpkV0lpT2lJM1pUSTNaR0V3Wm1ReU1XRTBOMkU0WVRJNVlqZzRabUl4TWpabVpEbGhaU0o5LlBlSm1reEdmZHdCczNOZlNhS040Z3k0bUdvZDEtRFJvOU5MenZFVFc5SGZDRGhsMWdFVjNQOUc0YW9pZDJ5NmhrME1qTWduRFBZRUVaaXlUU0VucUNaakktWVFaamZwaHNXWHpieDFoTUZBSXJtNjBqNTgxeFFZcm5RaXRTdlBWTmVhNUwybjN3UVAwa00ybVNvQXNNQzJlcWR6UFpTLVdNS2JJbVBJMVRXdFZGd3ZPNmNoSGxmblhnV1VzNkJycWJldHhOTnd2U0pqTktBLWVQa19JRm1LSi1WaXlGN0kxWnVHbHRvWjdNZ3F0aFlfMjBKbkxSUE5uMnhZcFlGVDM1UFgwWjk4LWM1ODRaMFQ0TGY5UXJ4SUZWWFJORXFFMGpXQUgyRmJKQTdXQmN6VnNyam1DLWwwaTRIRWw3UWNaMXNpbnpDRUFlZVppNTJTbzVidXBzRkVLU2tkNjhpWW45MUJtSHpwYm1xS3MwYTJRUk1SREtuc1VRY1pZX3AtNUQwUXBETWNBVzRHODk4cG1kdkVoTzZzVjBzTmxqS0M5YnVNTWhaZlJsOWZkN1B4XzByTVFpRGc5S1Z5UkNoNWlndGlGemJtcUw3bl9TZURiTWRuWmpUak9CWk0zdkhIWWZENGtwUXV6bmdWN3dGZ3l3QzYxckZzYkoybmUzdldJNDRMbnZVcTEwcC1sMDVjVC0tcXFmTmhOTEhvQkpjMkdabnFRckh1bzhpSlhKU2RxaExGZEFqcW9EZEMyTzVPTkY4TnZLb01jNEZiMXdUZ3h4NkZsd3F0TkhrQjRhTFJjZUlEckVEdTlLblRKTmpOdGhzdnRFYUxOOWxNZlk0OWZLdGZXSXJOTlNEb2NWQVVnT2FQTVhyczJtLWUzX1pOVk5ScjhkSmlyUC1vIgogICAgfQogIH0KfQ=="}}}'
+sshKey: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINOlwdAhXePi24cmBNP24mX5NXihT4delYpDlTAPSkGy user@company"
