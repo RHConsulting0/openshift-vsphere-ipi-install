@@ -1,0 +1,367 @@
+---
+apiVersion: argoproj.io/v1beta1
+kind: ArgoCD
+metadata:
+  name: openshift-gitops
+spec:
+  # override so no conflict with anything that sets `app.kubernetes.io/instance` like the PolicyGenerator plugin
+  applicationInstanceLabelKey: argocd.argoproj.io/instance
+  resourceTrackingMethod: annotation+label
+
+  # set so that PolicyGenerator kustomize plugin can be used
+  kustomizeBuildOptions: --enable-helm --helm-command /usr/local/bin/helm --enable-alpha-plugins --load-restrictor LoadRestrictionsNone
+
+  extraConfig:
+    resource.compareoptions: |
+      ignoreAggregatedRoles: true
+  server:
+    autoscale:
+      enabled: true
+    grpc:
+      ingress:
+        enabled: false
+    ingress:
+      enabled: false
+    resources:
+      limits:
+        cpu: '1'
+        memory: 512Mi
+      requests:
+        cpu: 150m
+        memory: 256Mi
+    route:
+      enabled: true
+    service:
+      type: ''
+  grafana:
+    enabled: true
+    ingress:
+      enabled: false
+    resources:
+      limits:
+        cpu: 500m
+        memory: 256Mi
+      requests:
+        cpu: 250m
+        memory: 128Mi
+    route:
+      enabled: true
+  monitoring:
+    enabled: false
+  notifications:
+    enabled: false
+  prometheus:
+    enabled: false
+    ingress:
+      enabled: false
+    route:
+      enabled: false
+  initialSSHKnownHosts: {}
+  sso:
+    dex:
+      openShiftOAuth: true
+      resources:
+        limits:
+          cpu: 500m
+          memory: 256Mi
+        requests:
+          cpu: 250m
+          memory: 128Mi
+    provider: dex
+  applicationSet:
+    env:
+    - name: ARGOCD_APPLICATIONSET_CONTROLLER_ENABLE_NEW_GIT_FILE_GLOBBING
+      value: 'true'
+    extraCommandArgs:
+    - --enable-new-git-file-globbing
+    resources:
+      limits:
+        cpu: '2'
+        memory: 1Gi
+      requests:
+        cpu: 250m
+        memory: 512Mi
+    webhookServer:
+      ingress:
+        enabled: false
+      route:
+        enabled: false
+  rbac:
+    defaultPolicy: ''
+    policy: |
+      g, system:cluster-admins, role:admin
+      g, cluster-administrators, role:admin
+    scopes: '[groups]'
+  repo:
+    volumes:
+    - emptyDir: {}
+      name: policy-generator
+    env:
+    - name: POLICY_GEN_ENABLE_HELM
+      value: "true"
+    initContainers:
+    - args:
+      - -c
+      #- cp /etc/kustomize/plugin/policy.open-cluster-management.io/v1/policygenerator/PolicyGenerator /policy-generator/PolicyGenerator
+
+      # NOTE: not using version from ACM image right now because it doesn't currently have a new enough PolicyGenerator which supports POLICY_GEN_ENABLE_HELM environment variable
+      - echo "Download upstream PolicyGenerator plugin v1.15.0";
+        curl -L -o /policy-generator/PolicyGenerator https://github.com/open-cluster-management-io/policy-generator-plugin/releases/download/v1.15.0/linux-amd64-PolicyGenerator;
+        echo; echo "Set execute permissions on PolicyGenerator plugin";
+        chmod +x /policy-generator/PolicyGenerator;
+      command:
+      - /bin/bash
+      image: registry.redhat.io/rhacm2/multicluster-operators-subscription-rhel8:v2.8
+      name: policy-generator-install
+      volumeMounts:
+      - mountPath: /policy-generator
+        name: policy-generator
+    volumeMounts:
+    - mountPath: /.config/kustomize/plugin/policy.open-cluster-management.io/v1/policygenerator
+      name: policy-generator
+    resources:
+      limits:
+        cpu: '1'
+        memory: 1Gi
+      requests:
+        cpu: 250m
+        memory: 256Mi
+  resourceExclusions: |
+    - apiGroups:
+      - internal.open-cluster-management.io
+      kinds:
+      - ManagedClusterInfo
+      clusters:
+      - "*"
+    - apiGroups:
+      - tekton.dev
+      clusters:
+      - '*'
+      kinds:
+      - TaskRun
+      - PipelineRun
+  ha:
+    enabled: false
+    resources:
+      limits:
+        cpu: 500m
+        memory: 256Mi
+      requests:
+        cpu: 250m
+        memory: 128Mi
+  tls:
+    ca: {}
+  redis:
+    resources:
+      limits:
+        cpu: 500m
+        memory: 256Mi
+      requests:
+        cpu: 250m
+        memory: 128Mi
+  controller:
+    processors: {}
+    resources:
+      limits:
+        cpu: '2'
+        memory: 2Gi
+      requests:
+        cpu: 250m
+        memory: 1Gi
+    sharding: {}
+
+  resourceHealthChecks:
+  # Needed so that pending InstallPlan for subscription will not block job approver
+  #
+  # Source: https://github.com/redhat-cop/helm-charts/tree/main/charts/operators-installer#argocd--red-hat-openshift-gitops-sync-status-and-health-checks
+  - group: operators.coreos.com
+    kind: Subscription
+    check: |
+      health_status = {}
+      if obj.status ~= nil then
+        if obj.status.conditions ~= nil then
+          numDegraded = 0
+          numPending = 0
+          msg = ""
+          for i, condition in pairs(obj.status.conditions) do
+            msg = msg .. i .. ": " .. condition.type .. " | " .. condition.status .. "\n"
+            if condition.type == "InstallPlanPending" and condition.status == "True" then
+              numPending = numPending + 1
+            elseif (condition.type == "InstallPlanMissing" and condition.reason ~= "ReferencedInstallPlanNotFound") then
+              numDegraded = numDegraded + 1
+            elseif (condition.type == "CatalogSourcesUnhealthy" or condition.type == "InstallPlanFailed" or condition.type == "ResolutionFailed") and condition.status == "True" then
+              numDegraded = numDegraded + 1
+            end
+          end
+        end
+        if numDegraded == 0 and numPending == 0 then
+          health_status.status = "Healthy"
+          health_status.message = msg
+          return health_status
+        elseif numPending > 0 and numDegraded == 0 and obj.spec.installPlanApproval == "Manual" then
+          health_status.status = "Healthy"
+          health_status.message = "An install plan for a subscription is pending installation but install plan approval is set to manual so considering this as healthy: " .. msg
+          return health_status
+        elseif numPending > 0 and numDegraded == 0 then
+          health_status.status = "Progressing"
+          health_status.message = "An install plan for a subscription is pending installation"
+          return health_status
+        else
+          health_status.status = "Degraded"
+          health_status.message = msg
+          return health_status
+        end
+      end
+      return health_status
+
+  # Custom so that MCH wont show healthy until it's done installing
+  - group: operator.open-cluster-management.io
+    kind: MultiClusterHub
+    check: |
+      health_status = {}
+      if obj.status ~= nil then
+        if obj.status.phase == "Running" then
+          health_status.status = "Healthy"
+        elseif obj.status.phase == "Installing" then
+          health_status.status = "Progressing"
+           health_status.message = "MultiClusterHub is installing"
+        elseif obj.status.phase == "Uninstalling" then
+          health_status.status = "Degraded"
+          health_status.message = "MultiClusterHub is uninstalling"
+        else
+          health_status.status = "Degraded"
+        end
+      end
+      return health_status
+
+  # SOURCE: https://github.com/argoproj/argo-cd/blob/master/resource_customizations/policy.open-cluster-management.io/Policy/health.lua
+  - group: policy.open-cluster-management.io
+    kind: Policy
+    check: |
+      hs = {}
+      if obj.status == nil or obj.status.compliant == nil then
+        hs.status = "Progressing"
+        hs.message = "Waiting for the status to be reported"
+        return hs
+      end
+      if obj.status.compliant == "Compliant" then
+        hs.status = "Healthy"
+      else
+        hs.status = "Degraded"
+      end
+      noncompliants = {}
+      if obj.status.status ~= nil then
+        -- "root" policy
+        for i, entry in ipairs(obj.status.status) do
+          if entry.compliant ~= "Compliant" then
+            table.insert(noncompliants, entry.clustername)
+          end
+        end
+        if #noncompliants == 0 then
+          hs.message = "All clusters are compliant"
+        else
+          hs.message = "NonCompliant clusters: " .. table.concat(noncompliants, ", ")
+        end
+      elseif obj.status.details ~= nil then
+        -- "replicated" policy
+        for i, entry in ipairs(obj.status.details) do
+          if entry.compliant ~= "Compliant" then
+            table.insert(noncompliants, entry.templateMeta.name)
+          end
+        end
+        if #noncompliants == 0 then
+          hs.message = "All templates are compliant"
+        else
+          hs.message = "NonCompliant templates: " .. table.concat(noncompliants, ", ")
+        end
+      end
+      return hs
+
+  # SOURCE: https://github.com/argoproj/argo-cd/blob/master/resource_customizations/policy.open-cluster-management.io/OperatorPolicy/health.lua
+  - group: policy.open-cluster-management.io
+    kind: OperatorPolicy
+    check: |
+      hs = {}
+      if obj.status == nil or obj.status.conditions == nil then
+        hs.status = "Progressing"
+        hs.message = "Waiting for the status to be reported"
+        return hs
+      end
+      if obj.status.observedGeneration ~= nil and obj.status.observedGeneration ~= obj.metadata.generation then
+        hs.status = "Progressing"
+        hs.message = "Waiting for the status to be updated"
+        return hs  
+      end
+      for i, condition in ipairs(obj.status.conditions) do
+        if condition.type == "Compliant" then
+          hs.message = condition.message
+          if condition.status == "True" then
+            hs.status = "Healthy"
+            return hs
+          else
+            hs.status = "Degraded"
+            return hs
+          end
+        end
+      end
+      hs.status = "Progressing"
+      hs.message = "Waiting for the compliance condition"
+      return hs
+
+  # SOURCE: https://github.com/argoproj/argo-cd/blob/master/resource_customizations/policy.open-cluster-management.io/ConfigurationPolicy/health.lua
+  - group: policy.open-cluster-management.io
+    kind: ConfigurationPolicy
+    check: |
+      hs = {}
+      if obj.status == nil or obj.status.compliant == nil then
+        hs.status = "Progressing"
+        hs.message = "Waiting for the status to be reported"
+        return hs
+      end
+      if obj.status.lastEvaluatedGeneration ~= obj.metadata.generation then
+        hs.status = "Progressing"
+        hs.message = "Waiting for the status to be updated"
+        return hs  
+      end
+      if obj.status.compliant == "Compliant" then
+        hs.status = "Healthy"
+      else
+        hs.status = "Degraded"
+      end
+      if obj.status.compliancyDetails ~= nil then
+        messages = {}
+        for i, compliancy in ipairs(obj.status.compliancyDetails) do
+          if compliancy.conditions ~= nil then
+            for i, condition in ipairs(compliancy.conditions) do
+              if condition.message ~= nil and condition.type ~= nil then
+                table.insert(messages, condition.type .. " - " .. condition.message)
+              end
+            end
+          end
+        end
+        hs.message = table.concat(messages, "; ")
+        return hs
+      end
+      hs.status = "Progressing"
+      hs.message = "Waiting for compliance"
+      return hs
+
+  # SOURCE: https://github.com/argoproj/argo-cd/blob/master/resource_customizations/policy.open-cluster-management.io/CertificatePolicy/health.lua
+  - group: policy.open-cluster-management.io
+    kind: CertificatePolicy
+    check: |
+      hs = {}
+      if obj.status == nil or obj.status.compliant == nil then
+        hs.status = "Progressing"
+        hs.message = "Waiting for the status to be reported"
+        return hs
+      end
+      if obj.status.compliant == "Compliant" then
+        hs.status = "Healthy"
+        hs.message = "All certificates found comply with the policy"
+        return hs
+      else
+        hs.status = "Degraded"
+        hs.message = "At least once certificate does not comply with the policy"
+        return hs
+      end

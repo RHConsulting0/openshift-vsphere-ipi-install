@@ -1,0 +1,34 @@
+
+---
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sRequiredManifestSubset
+metadata:
+  name: infra-apps-healthy-and-synced
+spec:
+  match:
+    kinds:
+    - apiGroups:
+      - argoproj.io
+      kinds:
+      - Application
+    namespaces:
+    - openshift-gitops
+
+    # ignore the application which is deploying acm policies so we don't get in a loop where
+    # 1. ArgoCD Application is not healthy because a deployed policy is not health
+    # 2. deployed policy is not healthy because a deployed ArgoCD Application (acm-policies) is not healthy
+    #
+    # NOTE: this is a bit hacky, and brittle, but don't have another idea
+    labelSelector:
+      matchExpressions:
+      - key: app.kubernetes.io/name
+        operator: NotIn
+        values:
+        - acm-policies-openshift-gitops
+  parameters:
+    manifest_subset:
+      status:
+        health:
+          status: Healthy
+        sync:
+          status: Synced

@@ -1,0 +1,29 @@
+apiVersion: external-secrets.io/v1beta1
+kind: ClusterSecretStore
+metadata:
+  name: cluster-vault
+spec:
+  conditions:
+    - namespaces:
+        - openshift-gitops
+        - openshift-ingress
+        - openshift-config
+        - openshift-authentication
+        - external-secrets-operator
+        - gitlab-runner
+  provider:
+    vault:
+      auth:
+        tokenSecretRef:
+          key: token
+          name: vault-token-infra
+          namespace: external-secrets-operator
+      caProvider:
+        key: ca.crt
+        name: vault-ca
+        namespace: external-secrets-operator
+        type: ConfigMap
+      namespace: external-secrets-operator
+      path: secrets
+      server:  https://vault.mydomain.com
+      version: v2

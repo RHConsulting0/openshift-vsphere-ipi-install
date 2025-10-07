@@ -1,0 +1,51 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: 00-cluster-management-root
+  namespace: openshift-gitops
+  labels:
+    app.kubernetes.io/name: 00-cluster-management-root
+    app.kubernetes.io/component: cluster-management
+    app.kubernetes.io/part-of: platform-management
+spec:
+  project: cluster-management
+  source:
+    # look for gitopsRepository in ConfigMap MY-CLUSTER-NAME-gitops-repo-config in the acm-policies-openshift-gitops namespace on the hub cluster, else error
+    # WARNING:
+    #   since have to get the ConfigMap from the ACM cluster there is no way to read custom-cluster-name from the destination cluster so config map has to be named after what ACM thinks the cluster name is
+    #   which is really only weird for the ACM cluster which is always called `local-cluster` until https://issues.redhat.com/browse/ACM-1290 is resolved
+    repoURL: '{{ default ("ERROR: looking up repo url") ("{{hub default ("") (lookup "v1" "ConfigMap" "acm-policies-openshift-gitops" (printf "%s-gitops-repo-config" .ManagedClusterName)).data.gitopsRepository hub}}") }}'
+
+    # look for gitopsRevision in ConfigMap MY-CLUSTER-NAME-gitops-repo-config in the acm-policies-openshift-gitops namespace on the hub cluster, else error
+    # WARNING:
+    #   since have to get the ConfigMap from the ACM cluster there is no way to read custom-cluster-name from the destination cluster so config map has to be named after what ACM thinks the cluster name is
+    #   which is really only weird for the ACM cluster which is always called `local-cluster` until https://issues.redhat.com/browse/ACM-1290 is resolved
+    targetRevision: '{{ default ("ERROR: looking up repo revision") ("{{hub default ("") (lookup "v1" "ConfigMap" "acm-policies-openshift-gitops" (printf "%s-gitops-repo-config" .ManagedClusterName)).data.gitopsRevision hub}}") }}'
+
+    # NOTE: can't always rely on "name" cluster claim because cluster ACM is running on is hard coded to `local-cluster` which causes problem when managing multiple ACMs.
+    #       this can be simplified when https://issues.redhat.com/browse/ACM-1290 is resolved
+    # NOTE: need to use lookup rather then `fromClusterClaim` for 'custom-cluster-name' so it wont fail if it doesn't exist like fromClusterClaim will
+    path: 'clusters/{{ (default (fromClusterClaim "name") (lookup "cluster.open-cluster-management.io/v1alpha1" "ClusterClaim" "" "custom-cluster-name").spec.value) }}'
+
+  destination:
+    server: https://kubernetes.default.svc
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
+
+    # since there are inter-dependencies between applications that can take a while to sort themselves out allow for infinite retries
+    retry:
+      limit: -1
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 10m
+
+    # ensure Argo gets namespace admin on created namespace
+    syncOptions:
+    - CreateNamespace=true
+    managedNamespaceMetadata:
+      labels:
+        argocd.argoproj.io/managed-by: openshift-gitops

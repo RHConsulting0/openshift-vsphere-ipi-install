@@ -1,0 +1,16 @@
+approveManualInstallPlanViaHook: true
+
+installPlanApproverAndVerifyJobsImage: quay.io/openshift/origin-cli:4.14
+
+operatorGroups:
+- name:  openshift-workload-availability
+  createNamespace: true
+
+operators:
+- channel: stable
+  installPlanApproval: Automatic
+  name: node-maintenance-operator
+  source: redhat-operators
+  sourceNamespace: openshift-marketplace
+  namespace: openshift-workload-availability
+  installPlanVerifierActiveDeadlineSeconds: 1200

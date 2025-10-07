@@ -1,0 +1,22 @@
+---
+kind: Kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+namespace: external-secrets-operator
+resources:
+  - ./infra_clusterstore.yaml
+  - ./operator-config.yaml
+  - ./secret-test-helloworld.yaml
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+# Should be created either by HCP provisioning or ACM/foundation init playbook.
+# secretGenerator:
+#   - name: vault-token-infra
+#     literals:
+#     - token=<redacted>
+
+configMapGenerator:
+  - name: vault-ca
+    files:
+      - ca.crt=vault-root.crt

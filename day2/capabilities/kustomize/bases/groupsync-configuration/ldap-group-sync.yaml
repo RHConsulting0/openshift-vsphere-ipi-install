@@ -1,0 +1,24 @@
+kind: LDAPSyncConfig
+apiVersion: v1
+url: "ldaps://idm-server.mydomain.com/"
+bindDN: "uid=openshift,cn=sysaccounts,cn=etc,dc=mydomain,dc=com"
+bindPassword:
+  file: "/etc/secrets/bindPassword"
+ca: /etc/ldap-ca/ca.crt
+augmentedActiveDirectory:
+    groupsQuery:
+        baseDN: "cn=groups,cn=accounts,dc=mydomain,dc=com"
+        scope: sub
+        derefAliases: never
+        pageSize: 0
+    groupUIDAttribute: dn
+    groupNameAttributes: [ cn ]
+    groupMembershipAttributes: [ memberOf ]
+    usersQuery:
+        baseDN: "cn=users,cn=accounts,dc=mydomain,dc=com"
+        scope: sub
+        derefAliases: never
+        pageSize: 0
+        filter: "(objectclass=person)"
+    userNameAttributes: [ uid ] 
+    userUIDAttributes: cn

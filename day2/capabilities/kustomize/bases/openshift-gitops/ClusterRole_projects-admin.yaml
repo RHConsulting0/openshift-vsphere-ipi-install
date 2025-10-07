@@ -1,0 +1,24 @@
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: projects-admin
+rules:
+- verbs:
+  - "*"
+  apiGroups:
+  - project.openshift.io
+  resources:
+  - projects
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: odf-mch-admin
+rules:
+- verbs:
+  - "*"
+  apiGroups:
+  - odf.openshift.io
+  resources:
+  - storagesystems

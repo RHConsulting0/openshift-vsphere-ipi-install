@@ -1,0 +1,78 @@
+---
+apiVersion: policy.open-cluster-management.io/v1
+kind: PolicyGenerator
+metadata:
+  name: cluster-management
+
+placementBindingDefaults:
+  name: cluster-management
+
+policyDefaults:
+  namespace: acm-policies-openshift-gitops
+  consolidateManifests: true
+  orderManifests: false
+  orderPolicies: true
+  generatePlacementWhenInSet: false
+  pruneObjectBehavior: None
+  complianceType: musthave
+  severity: critical
+  informGatekeeperPolicies: false
+  evaluationInterval:
+    compliant: 10s
+    noncompliant: 10s
+
+policySetDefaults:
+  generatePolicySetPlacement: true
+  placement:
+    labelSelector:
+      matchExpressions:
+        - key: apply-gitops
+          operator: In
+          values:
+            - "true"
+
+
+policies:
+- name: install-openshift-gitops-operator
+  description: Install OpenShift GitOps (ArgoCD) operator
+  policySets:
+  - cluster-management
+  remediationAction: enforce
+  manifests:
+  - path: policy-manifests/cluster-management/install-openshift-gitops-operator
+
+- name: configure-cluster-gitops
+  description: Configure OpenShift GitOps instance for cluster gitops
+  policySets:
+  - cluster-management
+  remediationAction: enforce
+  manifests:
+  - path: policy-manifests/cluster-management/configure-cluster-gitops
+
+- name: validate-cluster-gitops
+  description: Validate OpenShift GitOps is running and healthy
+  policySets:
+  - cluster-management
+  remediationAction: inform
+  manifests:
+  - path: policy-manifests/cluster-management/validate-cluster-gitops
+
+- name: deploy-cluster-management-apps
+  description: Deploy cluster management ArgoCD Applications
+  policySets:
+  - cluster-management
+  remediationAction: enforce
+  manifests:
+  - path: policy-manifests/cluster-management/deploy-cluster-management-applications
+
+- name: validate-cluster-management-apps
+  description: Validate cluster management ArgoCD Applications are healthy and synced
+  policySets:
+  - cluster-management
+  remediationAction: inform
+  manifests:
+  - path: policy-manifests/cluster-management/validate-cluster-management-applications
+
+policySets:
+- name: cluster-management
+  description: Cluster management policies related to deploying, configuring, and monitoring cluster infrastructure gitops components

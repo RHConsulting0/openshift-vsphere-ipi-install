@@ -1,0 +1,12 @@
+apiVersion: machineconfiguration.openshift.io/v1
+kind: KubeletConfig
+metadata:
+  name: tune-kubelet
+spec:
+  autoSizingReserved: true
+  kubeletConfig:
+    maxPods: 1280
+    podsPerCore: 10
+  machineConfigPoolSelector:
+    matchLabels:
+      pools.operator.machineconfiguration.openshift.io/master: ""

@@ -1,0 +1,30 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: openshift-gitops
+
+labels:
+- includeSelectors: false
+  pairs:
+    app.kubernetes.io/name: openshift-gitops
+    app.kubernetes.io/component: cluster-management
+    app.kubernetes.io/part-of: platform-management
+
+resources:
+- ArcoCD_openshift-gitops.yaml
+- AppProject_cluster-management.yaml
+- AppProject_default.yaml
+- ClusterRoleBinding_openshift-gitops-acm-cluster-admin.yaml
+- ClusterRoleBinding_openshift-gitops-acm-clusterclaims-admin.yaml
+- ClusterRoleBinding_openshift-gitops-acm-multiclusterhubs-admin.yaml
+- ClusterRoleBinding_openshift-gitops-argo-applicationsets-admin.yaml
+- ClusterRoleBinding_openshift-gitops-projects-admin.yaml
+- ClusterRoleBinding_argo-admin.yaml
+- ClusterRoleBinding_eso-admin.yaml
+- ClusterRoleBinding_crd-admin.yaml
+- ClusterRole_argo-admin.yaml
+- ClusterRole_eso-admin.yaml
+- ClusterRole_open-cluster-management-clusterclaims-admin.yaml
+- ClusterRole_crd-admin.yaml
+- ClusterRole_projects-admin.yaml

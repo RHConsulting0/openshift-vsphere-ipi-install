@@ -1,0 +1,9 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cluster-gitops-repo-config
+data:
+  gitopsRepository: 
+  gitopsRevision: 
+immutable: false

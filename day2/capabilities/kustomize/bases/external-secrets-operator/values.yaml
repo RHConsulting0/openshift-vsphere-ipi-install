@@ -1,0 +1,14 @@
+---
+operatorGroups:
+- name: external-secrets-operator
+  createNamespace: true # Set to false because this is manually created when injecting main Vault secret.
+  targetOwnNamespace: false
+operators:
+- channel: stable
+  installPlanApproval: Manual
+  automaticIntermediateManualUpgrades: true
+  name: external-secrets-operator
+  source: community-operators
+  sourceNamespace: openshift-marketplace
+  csv: external-secrets-operator.v0.11.0
+  namespace: external-secrets-operator

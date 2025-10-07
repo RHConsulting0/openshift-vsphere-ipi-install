@@ -1,0 +1,13 @@
+---
+# NOTE: for "some reason" admin of the OCM clusterclaims resource is not included in the "open-cluster-management:cluster-manager-admin" role so adding a custom one
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: 'open-cluster-management:clusterclaims-admin'
+rules:
+- verbs:
+  - "*"
+  apiGroups:
+  - cluster.open-cluster-management.io
+  resources:
+  - clusterclaims
