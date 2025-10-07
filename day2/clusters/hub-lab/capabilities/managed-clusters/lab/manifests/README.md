@@ -1,0 +1,1 @@
+# manifests for deploying LAB cluster

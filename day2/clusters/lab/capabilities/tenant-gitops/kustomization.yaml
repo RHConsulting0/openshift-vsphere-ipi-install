@@ -1,0 +1,21 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# NOTE: need to re-specify here, rather then inheriting from base, so ArgoCD ApplicationSet can read it so in Application template can specify the namespace and create it so that argo can give itself namespace admin
+namespace: tenant-gitops
+
+# NOTE: setting chart home as a workaround for https://github.com/argoproj/argo-cd/issues/8008
+helmGlobals:
+  chartHome: charts/tenant-gitops
+
+# install cluster capabilities
+helmCharts:
+- name: tenant-gitops
+  version: 1.0.0
+  repo: oci://quay.io/cpigues/helm-charts
+  valuesFile: tenant-gitops_values.yaml
+- name: application-set
+  version: 1.0.0
+  repo: oci://quay.io/cpigues/helm-charts
+  valuesFile: tenant-gitops_values.yaml

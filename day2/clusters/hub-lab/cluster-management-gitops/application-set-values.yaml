@@ -1,0 +1,35 @@
+---
+applicationSetManagedByArgoCDNamespace: openshift-gitops
+
+applicationSetDefaults:
+  componentLabel: cluster-management
+  partOfLabel: platform-management
+  argoCDProject: cluster-management
+  syncPolicyAutomated: true
+  preventCascadingDeletion: false
+
+applicationSetGitSources:
+# cluster specific capabilities
+- name: cluster-foundation1
+  repoURL: https://gitlab.consulting.redhat.com/platform-management-gitops/platform-management-gitops.git
+  revision: main
+  path: clusters/foundation1/capabilities/*/kustomization.yaml
+
+# group-all capabilities
+- name: group-all
+  repoURL: https://gitlab.consulting.redhat.com/platform-management-gitops/platform-groups.git
+  revision: main
+  path: kustomize/groups/all/capabilities/*/kustomization.yaml
+
+# group-foundation capabilities
+- name: group-foundation
+  repoURL: https://gitlab.consulting.redhat.com/platform-management-gitops/platform-groups.git
+  revision: main
+  path: kustomize/groups/foundation/capabilities/*/kustomization.yaml
+
+# group-foundation-protected capabilities
+- name: group-foundation-protected
+  repoURL: https://gitlab.consulting.redhat.com/platform-management-gitops/platform-groups.git
+  revision: main
+  path: kustomize/groups/foundation-protected/capabilities/*/kustomization.yaml
+  preventCascadingDeletion: true

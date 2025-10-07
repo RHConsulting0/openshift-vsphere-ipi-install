@@ -1,0 +1,17 @@
+---
+# pass values to application-set chart
+applicationSetManagedByArgoCDNamespace: tenant-gitops
+
+applicationSetDefaults:
+  componentLabel: tenant-gitops
+  partOfLabel: tenant-management
+  argoCDProject: tenant-management
+  syncPolicyAutomated: true
+  preventCascadingDeletion: false
+
+applicationSetGitSources:
+  tenants:
+    name: tenants
+    repoURL: https://gitlab.consulting.redhat.com/platform-management-gitops/platform-tenants.git
+    revision: main
+    path: clusters/workload1/*/kustomization.yaml
