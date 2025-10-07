@@ -1,0 +1,10 @@
+---
+- name: OpenShift vSphere IPI Installation and Monitoring
+  hosts: localhost
+  gather_facts: true
+  become: false
+
+  tasks:
+    - name: Start Cluster Install
+      ansible.builtin.import_role:
+        name: install_and_monitor_cluster

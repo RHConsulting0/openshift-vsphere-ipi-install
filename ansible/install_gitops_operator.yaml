@@ -1,0 +1,10 @@
+---
+- name: Install GitOps Operator using operators-installer Helm Chart
+  hosts: localhost
+  gather_facts: true
+  become: false
+
+  tasks:
+    - name: Install GitOps Operator
+      ansible.builtin.import_role:
+        name: install_gitops_operator

@@ -1,0 +1,421 @@
+---
+- name: Validate prerequisites
+  block:
+    - name: Check for oc command
+      ansible.builtin.command: oc version
+      register: oc_check
+      changed_when: false
+      failed_when: false
+
+    - name: Fail if oc not found
+      ansible.builtin.fail:
+        msg: "OpenShift CLI (oc) not found. Please install oc command."
+      when: oc_check.rc != 0
+
+    - name: Check for helm command
+      ansible.builtin.command: helm version
+      register: helm_check
+      changed_when: false
+      failed_when: false
+
+    - name: Fail if helm not found
+      ansible.builtin.fail:
+        msg: "Helm CLI not found. Please install helm command."
+      when: helm_check.rc != 0
+
+    - name: Verify cluster connectivity
+      ansible.builtin.command: >
+       oc cluster-info
+      environment:
+        KUBECONFIG: "{{ ocp_install.verify.kubeconfig_path }}"
+      register: cluster_info
+      retries: "{{ validation.retry_attempts }}"
+      delay: "{{ validation.retry_delay }}"
+      until: cluster_info.rc == 0
+      changed_when: false
+
+    - name: Display cluster information
+      ansible.builtin.debug:
+        msg: "{{ cluster_info.stdout_lines }}"
+
+- name: Prepare Helm environment
+  block:
+    - name: Add Red Hat CoP Helm repository
+      ansible.builtin.command: >
+        helm repo add {{ helm_repo_name }} {{ helm_repo_url }}
+      register: helm_repo_add
+      changed_when: helm_repo_add.rc == 0
+      failed_when: helm_repo_add.rc != 0 and "already exists" not in helm_repo_add.stderr
+
+    - name: Update Helm repositories
+      ansible.builtin.command: helm repo update
+      register: helm_repo_update
+      changed_when: helm_repo_update.rc == 0
+
+    - name: List available chart versions
+      ansible.builtin.command: >
+        helm search repo {{ helm_repo_name }}/{{ chart_name }} --versions
+      register: chart_versions
+      changed_when: false
+
+    - name: Display available chart versions
+      ansible.builtin.debug:
+        msg: "{{ chart_versions.stdout_lines }}"
+
+- name: Create GitOps operator values file
+  block:
+    - name: Create values directory
+      ansible.builtin.file:
+        path: "{{ playbook_dir }}/templates"
+        state: directory
+        mode: '0755'
+
+    - name: Create GitOps operator values file
+      ansible.builtin.copy:
+        content: |
+          # GitOps Operator Configuration
+          # Using operators-installer Helm chart from Red Hat CoP
+
+          # Operator configuration
+          operator:
+            name: "{{ gitops_operator_name }}"
+            channel: "{{ gitops_channel }}"
+            installMode: "{{ gitops_install_mode }}"
+            namespace: "{{ gitops_namespace }}"
+
+          # Subscription configuration
+          subscription:
+            name: "{{ gitops_operator_name }}-subscription"
+            namespace: "{{ gitops_namespace }}"
+            channel: "{{ gitops_channel }}"
+            source: "redhat-operators"
+            sourceNamespace: "openshift-marketplace"
+
+          # ArgoCD instance configuration
+          argocd:
+            enabled: true
+            namespace: "{{ gitops_namespace }}"
+            name: "openshift-gitops"
+
+            # Server configuration
+            server:
+              insecure: false
+              serviceType: "ClusterIP"
+
+            # Controller configuration
+            controller:
+              replicas: 1
+
+            # Repository server configuration
+            repoServer:
+              replicas: 1
+
+            # Application set controller
+            applicationSet:
+              enabled: true
+              replicas: 1
+
+            # Dex configuration (for SSO)
+            dex:
+              enabled: true
+              replicas: 1
+
+            # Redis configuration
+            redis:
+              enabled: true
+              replicas: 1
+
+            # Resource limits
+            resources:
+              limits:
+                cpu: "1000m"
+                memory: "1Gi"
+              requests:
+                cpu: "100m"
+                memory: "128Mi"
+
+          # RBAC configuration
+          rbac:
+            enabled: true
+            createClusterRole: true
+            createClusterRoleBinding: true
+
+          # Service account configuration
+          serviceAccount:
+            create: true
+            name: "{{ gitops_operator_name }}-sa"
+            annotations: {}
+
+          # Security context
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            fsGroup: 1000
+
+          # Pod security context
+          podSecurityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            fsGroup: 1000
+
+          # Monitoring configuration
+          monitoring:
+            enabled: true
+            serviceMonitor:
+              enabled: true
+              namespace: "{{ gitops_namespace }}"
+
+          # Network policies
+          networkPolicy:
+            enabled: false  # Enable if needed
+
+          # Ingress configuration
+          ingress:
+            enabled: false  # Use OpenShift Routes instead
+
+          # Route configuration (OpenShift specific)
+          route:
+            enabled: true
+            name: "{{ gitops_namespace }}"
+            host: "{{ gitops_namespace }}.{{ install_config.cluster_name }}.{{ install_config.base_domain }}"
+            tls:
+              termination: "edge"
+              insecureEdgeTerminationPolicy: "Redirect"
+        dest: "{{ values_file }}"
+        mode: '0644'
+
+- name: Install GitOps operator using Helm
+  block:
+    - name: Install GitOps operator with Helm
+      ansible.builtin.command: >
+        helm upgrade --install {{ gitops_operator_name }} 
+        {{ helm_repo_name }}/{{ chart_name }} 
+        --namespace {{ gitops_namespace }} 
+        --create-namespace 
+        --values {{ values_file }}
+        --version {{ chart_version }}
+        --wait 
+        --timeout {{ install_timeout }}s
+      register: helm_install
+      retries: 3
+      delay: 30
+
+    - name: Display Helm installation output
+      ansible.builtin.debug:
+        msg: "{{ helm_install.stdout_lines }}"
+
+    - name: Check Helm installation status
+      ansible.builtin.command: >
+        helm list --namespace {{ gitops_namespace }}
+      register: helm_status
+      changed_when: false
+
+    - name: Display Helm status
+      ansible.builtin.debug:
+        msg: "{{ helm_status.stdout_lines }}"
+
+- name: Wait for GitOps operator to be ready
+  block:
+    - name: Wait for operator subscription to be ready
+      ansible.builtin.command: >
+        oc get subscription {{ gitops_operator_name }}-subscription 
+        --namespace {{ gitops_namespace }} 
+        --output jsonpath='{.status.state}'
+      register: subscription_status
+      retries: "{{ max_retries }}"
+      delay: "{{ check_interval }}"
+      until: subscription_status.stdout == "AtLatestKnown"
+
+    - name: Wait for operator CSV to be ready
+      ansible.builtin.command: >
+        oc get csv --namespace {{ gitops_namespace }} 
+        --selector operators.coreos.com/{{ gitops_operator_name }}.{{ gitops_namespace }} 
+        --output jsonpath='{.items[0].status.phase}'
+      register: csv_status
+      retries: "{{ max_retries }}"
+      delay: "{{ check_interval }}"
+      until: csv_status.stdout == "Succeeded"
+
+    - name: Display operator status
+      ansible.builtin.debug:
+        msg: "GitOps operator is ready and running"
+
+- name: Create ArgoCD instance
+  block:
+    - name: Create ArgoCD instance
+      ansible.builtin.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: ArgoCD
+          metadata:
+            name: "{{ gitops_operator_name }}"
+            namespace: "{{ gitops_namespace }}"
+          spec:
+            server:
+              insecure: false
+              service:
+                type: ClusterIP
+            controller:
+              replicas: 1
+            repo:
+              replicas: 1
+            applicationSet:
+              replicas: 1
+            dex:
+              replicas: 1
+            redis:
+              replicas: 1
+            global:
+              domain: "{{ install_config.cluster_name }}.{{ install_config.base_domain }}"
+      register: argocd_instance
+
+    - name: Wait for ArgoCD instance to be ready
+      ansible.builtin.command: >
+        oc get argocd {{ gitops_operator_name }} 
+        --namespace {{ gitops_namespace }} 
+        --output jsonpath='{.status.phase}'
+      register: argocd_status
+      retries: "{{ max_retries }}"
+      delay: "{{ check_interval }}"
+      until: argocd_status.stdout == "Available"
+
+    - name: Display ArgoCD instance status
+      ansible.builtin.debug:
+        msg: "ArgoCD instance is ready and available"
+
+- name: Configure ArgoCD access
+  block:
+    - name: Get ArgoCD admin password
+      ansible.builtin.command: >
+        oc get secret {{ gitops_operator_name }}-cluster 
+        --namespace {{ gitops_namespace }} 
+        --output jsonpath='{.data.admin\.password}' | base64 -d
+      register: argocd_password
+      changed_when: false
+
+    - name: Get ArgoCD server route
+      ansible.builtin.command: >
+        oc get route {{ gitops_operator_name }}-server 
+        --namespace {{ gitops_namespace }} 
+        --output jsonpath='{.spec.host}'
+      register: argocd_route
+      changed_when: false
+
+    - name: Set ArgoCD access information
+      ansible.builtin.set_fact:
+        argocd_access_info:
+          url: "https://{{ argocd_route.stdout }}"
+          username: "admin"
+          password: "{{ argocd_password.stdout }}"
+          namespace: "{{ gitops_namespace }}"
+
+    - name: Display ArgoCD access information
+      ansible.builtin.debug:
+        msg: "{{ argocd_access_info }}"
+
+- name: Validate GitOps installation
+  block:
+    - name: Check ArgoCD pods status
+      ansible.builtin.command: >
+        oc get pods --namespace {{ gitops_namespace }} 
+        --selector app.kubernetes.io/name=argocd-server
+      register: argocd_pods
+      changed_when: false
+
+    - name: Display ArgoCD pods status
+      ansible.builtin.debug:
+        msg: "{{ argocd_pods.stdout_lines }}"
+
+    - name: Check ArgoCD services
+      ansible.builtin.command: >
+        oc get services --namespace {{ gitops_namespace }} 
+        --selector app.kubernetes.io/name=argocd-server
+      register: argocd_services
+      changed_when: false
+
+    - name: Display ArgoCD services
+      ansible.builtin.debug:
+        msg: "{{ argocd_services.stdout_lines }}"
+
+    - name: Check ArgoCD routes
+      ansible.builtin.command: >
+        oc get routes --namespace {{ gitops_namespace }} --selector app.kubernetes.io/name=argocd-server
+      register: argocd_routes
+      changed_when: false
+
+    - name: Display ArgoCD routes
+      ansible.builtin.debug:
+        msg: "{{ argocd_routes.stdout_lines }}"
+
+- name: Create installation summary
+  block:
+    - name: Generate installation summary
+      ansible.builtin.set_fact:
+        gitops_installation_summary:
+          operator_name: "{{ gitops_operator_name }}"
+          namespace: "{{ gitops_namespace }}"
+          chart_version: "{{ chart_version }}"
+          argocd_url: "{{ argocd_access_info.url }}"
+          argocd_username: "{{ argocd_access_info.username }}"
+          argocd_password: "{{ argocd_access_info.password }}"
+          installation_time: "{{ ansible_date_time.iso8601 }}"
+          status: "Successfully installed"
+
+    - name: Display installation summary
+      ansible.builtin.debug:
+        msg: "{{ gitops_installation_summary }}"
+
+    - name: Save installation summary to file
+      ansible.builtin.copy:
+        content: |
+          # GitOps Operator Installation Summary
+          Installation Time: {{ gitops_installation_summary.installation_time }}
+          Operator Name: {{ gitops_installation_summary.operator_name }}
+          Namespace: {{ gitops_installation_summary.namespace }}
+          Chart Version: {{ gitops_installation_summary.chart_version }}
+          ArgoCD URL: {{ gitops_installation_summary.argocd_url }}
+          ArgoCD Username: {{ gitops_installation_summary.argocd_username }}
+          ArgoCD Password: {{ gitops_installation_summary.argocd_password }}
+          Status: {{ gitops_installation_summary.status }}
+
+          # Access Instructions
+          1. Open browser to: {{ gitops_installation_summary.argocd_url }}
+          2. Login with username: {{ gitops_installation_summary.argocd_username }}
+          3. Password: {{ gitops_installation_summary.argocd_password }}
+          4. Configure Git repositories and applications
+        dest: "{{ playbook_dir }}/gitops-installation-summary.txt"
+        mode: '0644'
+
+# rescue:
+#   - name: Installation failed - gathering debug information
+#     block:
+#       - name: Check operator subscription status
+#         ansible.builtin.command: >
+#           oc get subscription --namespace {{ gitops_namespace }}
+#         register: subscription_debug
+#         failed_when: false
+
+#       - name: Check CSV status
+#         ansible.builtin.command: >
+#           oc get csv --namespace {{ gitops_namespace }}
+#         register: csv_debug
+#         failed_when: false
+
+#       - name: Check pods status
+#         ansible.builtin.command: >
+#           oc get pods --namespace {{ gitops_namespace }}
+#         register: pods_debug
+#         failed_when: false
+
+#       - name: Display debug information
+#         ansible.builtin.debug:
+#           msg:
+#             - "GitOps operator installation failed"
+#             - "Subscription status: {{ subscription_debug.stdout_lines }}"
+#             - "CSV status: {{ csv_debug.stdout_lines }}"
+#             - "Pods status: {{ pods_debug.stdout_lines }}"
+
+#       - name: Fail with installation error
+#         ansible.builtin.fail:
+#           msg: "GitOps operator installation failed. Check logs and operator status."
