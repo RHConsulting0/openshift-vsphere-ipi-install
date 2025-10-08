@@ -42,7 +42,7 @@
     src: "/runner/provisioned-clusters/lab/auth"
     dest: "{{ playbook_dir }}/install-dir"
     remote_src: true
-    mode: '0644'
+    mode: '0744'
     directory_mode: '0755'
 
 - name: Display installation configuration
@@ -118,11 +118,6 @@
           - install_status.rc == 0
         fail_msg: "OpenShift installation failed. Check logs for details."
         success_msg: "OpenShift installation completed successfully."
-
-# TODO Display installation completion time - verify elapsed is a varible in install_status
-    - name: Display installation completion
-      ansible.builtin.debug:
-        msg: "Cluster installation completed in {{ install_status.elapsed | default('N/A') }} seconds"
 
 # Verification section
 - name: Validate cluster installation
@@ -214,46 +209,48 @@
           - "kubeconfig: {{ ocp_install.verify.kubeconfig_path }}"
           - "kubeadmin password: {{ kubeadmin_password_data }}"
 
+
+# node_list.rc == 0 and (node_list.stdout | from_json |
+# json_query("items[?status.conditions[?type=='Ready' && status=='True']") |
+# length) >= (validation.expected_nodes | default(1))
+
+
 - name: Validate cluster nodes
   block:
-    - name: Set KUBECONFIG environment variable
-      ansible.builtin.set_fact:
-        ansible_env:
-          KUBECONFIG: "{{ ocp_install.verify.kubeconfig_path }}"
-
     - name: Wait for nodes to be ready
-      ansible.builtin.command:
-        cmd: oc get nodes -o json
+      ansible.builtin.command: >
+        oc get nodes -o json
+      environment:
+        KUBECONFIG: "{{ ocp_install.verify.kubeconfig_path }}"
       register: node_list
       retries: "{{ validation.node_retries | default(10) }}"
       delay: "{{ validation.node_delay | default(15) }}"
       until: >-
-        (node_list.stdout | from_json |
-        json_query("items[?status.conditions[?type=='Ready'].status | [0]=='True']") |
-        length) >= validation.expected_nodes
+        node_list.rc == 0 and (node_list.stdout | from_json |
+          json_query("items[?status.conditions[?type=='Ready'].status | [0]=='True']") |
+          length) >= (validation.expected_nodes | default(1) | int)
       changed_when: false
       failed_when: node_list.rc != 0
 
-
-    # - name: Wait for nodes to be ready
-    #   ansible.builtin.command: >
-    #     oc get nodes -o json
-    #   register: node_list
-    #   retries: "{{ validation.node_retries | default(10) }}"
-    #   delay: "{{ validation.node_delay | default(15) }}"
-    #   until: >
-    #     (
-    #       node_list.stdout | from_json | json_query("items[?status.conditions[?type=='Ready'].status | [0]=='True']") | length
-    #     ) >= validation.expected_nodes
-    #   changed_when: false
-
-    - name: Set node_count fact
+    - name: Capture node readiness facts
       ansible.builtin.set_fact:
-        node_count: "{{ node_list.stdout_lines | select('search', ' Ready ') | list | length }}"
+        node_summary:
+          ready_node_count: "{{ (node_list.stdout | from_json | json_query('items[?status.conditions[?type==`Ready`].status | [0]==`True`]') | length) }}"
+          expected_node_count: "{{ validation.expected_nodes }}"
+          total_node_count: "{{ (node_list.stdout | from_json | json_query('items') | length) }}"
+
+    - name: Display node readiness status
+      ansible.builtin.debug:
+        msg: |
+          "Ready nodes: {{ node_summary.ready_node_count }}"
+          "Expected nodes: {{ node_summary.expected_node_count }}"
+          "Total nodes: {{ node_summary.total_node_count }}"
 
     - name: Get node status
       ansible.builtin.command: >
         oc get nodes -o wide
+      environment:
+        KUBECONFIG: "{{ ocp_install.verify.kubeconfig_path }}"
       register: node_status
       changed_when: false
 
@@ -261,29 +258,24 @@
       ansible.builtin.debug:
         msg: "{{ node_status.stdout_lines }}"
 
-    - name: Verify all nodes are ready
-      ansible.builtin.set_fact:
-        not_ready_count: "{{ node_list.stdout_lines | reject('search', ' Ready ') | list | length }}"
-
-    - name: Fail if nodes are not ready
-      ansible.builtin.fail:
-        msg: "Some nodes are not ready. Check cluster status."
-      when: not_ready_count > 0
-
     - name: Validate cluster operators
       block:
         - name: Wait for cluster operators to be available
           ansible.builtin.command: >
-            oc get clusteroperators --no-headers
+            oc get clusteroperators -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.status.conditions[?(@.type=="Available")].status}{"\n"}{end}'
+          environment:
+            KUBECONFIG: "{{ ocp_install.verify.kubeconfig_path }}"
           register: operator_list
           retries: "{{ validation.cluster_operators_retries }}"
           delay: "{{ validation.cluster_operators_delay }}"
-          until: (operator_list.stdout_lines | reject('search', ' Available ') | list | length) == 0
+          until: (operator_list.stdout_lines | select('match', 'False') | list | length) == 0
           changed_when: false
 
         - name: Get cluster operator status
           ansible.builtin.command: >
             oc get clusteroperators
+          environment:
+            KUBECONFIG: "{{ ocp_install.verify.kubeconfig_path }}"
           register: operators
           changed_when: false
 
@@ -298,6 +290,8 @@
     - name: Get cluster version
       ansible.builtin.command: >
         oc get clusterversion
+      environment:
+        KUBECONFIG: "{{ ocp_install.verify.kubeconfig_path }}"
       register: cluster_version
       changed_when: false
 
@@ -314,8 +308,7 @@
           api_url: "https://api.{{ install_config.cluster_name }}.{{ install_config.base_domain }}:6443"
           kubeconfig_path: "{{ ocp_install.verify.kubeconfig_path }}"
           kubeadmin_password: "{{ kubeadmin_password_data }}"
-          installation_time: "{{ install_status.elapsed }}"
-          node_count: "{{ node_count.stdout }}"
+          node_count: "{{ node_summary.ready_node_count }}"
           gitops_installed: "{{ install_gitops | default(false) }}"
 
     - name: Display installation summary
@@ -332,19 +325,14 @@
           API URL: https://api.{{ install_config.cluster_name }}.{{ install_config.base_domain }}:6443
           kubeconfig Path: {{ ocp_install.verify.kubeconfig_path }}
           kubeadmin Password: {{ kubeadmin_password_data }}
-          Installation Time: {{ install_status.elapsed }} seconds
-          Node Count: {{ node_count.stdout }}
-          GitOps Operator Installed: {{ install_gitops | default(false) }}
+          Node Count: {{ node_summary.ready_node_count }}
 
           # Access Instructions
           1. Set KUBECONFIG: export KUBECONFIG={{ ocp_install.verify.kubeconfig_path }}
           2. Login: oc login -u kubeadmin -p {{ kubeadmin_password_data }}
           3. Access Console: {{ console_url }}
-          {% if install_gitops %}
-          4. Access ArgoCD: Check gitops-installation-summary.txt for ArgoCD URL
-          {% endif %}
         dest: "{{ playbook_dir }}/install-dir/installation-summary.txt"
-        mode: '0644'
+        mode: '0755'
 
 - name: Handle installation errors
   block:

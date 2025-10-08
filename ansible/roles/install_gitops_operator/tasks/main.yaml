@@ -221,6 +221,8 @@
         oc get subscription {{ gitops_operator_name }}-subscription 
         --namespace {{ gitops_namespace }} 
         --output jsonpath='{.status.state}'
+      environment:
+        KUBECONFIG: "{{ ocp_install.verify.kubeconfig_path }}"
       register: subscription_status
       retries: "{{ max_retries }}"
       delay: "{{ check_interval }}"
@@ -231,6 +233,8 @@
         oc get csv --namespace {{ gitops_namespace }} 
         --selector operators.coreos.com/{{ gitops_operator_name }}.{{ gitops_namespace }} 
         --output jsonpath='{.items[0].status.phase}'
+      environment:
+        KUBECONFIG: "{{ ocp_install.verify.kubeconfig_path }}"
       register: csv_status
       retries: "{{ max_retries }}"
       delay: "{{ check_interval }}"
@@ -275,6 +279,8 @@
         oc get argocd {{ gitops_operator_name }} 
         --namespace {{ gitops_namespace }} 
         --output jsonpath='{.status.phase}'
+      environment:
+        KUBECONFIG: "{{ ocp_install.verify.kubeconfig_path }}"
       register: argocd_status
       retries: "{{ max_retries }}"
       delay: "{{ check_interval }}"
@@ -291,6 +297,8 @@
         oc get secret {{ gitops_operator_name }}-cluster 
         --namespace {{ gitops_namespace }} 
         --output jsonpath='{.data.admin\.password}' | base64 -d
+      environment:
+        KUBECONFIG: "{{ ocp_install.verify.kubeconfig_path }}"
       register: argocd_password
       changed_when: false
 
@@ -299,6 +307,8 @@
         oc get route {{ gitops_operator_name }}-server 
         --namespace {{ gitops_namespace }} 
         --output jsonpath='{.spec.host}'
+      environment:
+        KUBECONFIG: "{{ ocp_install.verify.kubeconfig_path }}"
       register: argocd_route
       changed_when: false
 
@@ -320,6 +330,8 @@
       ansible.builtin.command: >
         oc get pods --namespace {{ gitops_namespace }} 
         --selector app.kubernetes.io/name=argocd-server
+      environment:
+        KUBECONFIG: "{{ ocp_install.verify.kubeconfig_path }}"
       register: argocd_pods
       changed_when: false
 
@@ -331,6 +343,8 @@
       ansible.builtin.command: >
         oc get services --namespace {{ gitops_namespace }} 
         --selector app.kubernetes.io/name=argocd-server
+      environment:
+        KUBECONFIG: "{{ ocp_install.verify.kubeconfig_path }}"
       register: argocd_services
       changed_when: false
 
@@ -341,6 +355,8 @@
     - name: Check ArgoCD routes
       ansible.builtin.command: >
         oc get routes --namespace {{ gitops_namespace }} --selector app.kubernetes.io/name=argocd-server
+      environment:
+        KUBECONFIG: "{{ ocp_install.verify.kubeconfig_path }}"
       register: argocd_routes
       changed_when: false
 

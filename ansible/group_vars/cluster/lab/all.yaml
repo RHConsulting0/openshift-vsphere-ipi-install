@@ -95,11 +95,11 @@ validation:
   cluster_operators_retries: 30     # number of retries for cluster operators check
   cluster_operators_delay: 60   # delay between retries for cluster operators check (in seconds)
   expected_nodes: "{{ (vmconfig.master.replicas | default(3)) + (vmconfig.worker.replicas | default(2)) }}"
+  control_plane_nodes: "{{ vmconfig.master.replicas }}"
+  compute_nodes: "{{ vmconfig.worker.replicas }}"
   retry_attempts: 10            # retry attempts seconds
   retry_delay: 30               # delay between retries (in seconds)
   validation_timeout: 300       # overall timeout for validation (in seconds - 5 minutes)
-
-
 
 # OpenShift installer settings
 # DEPRECATED - use ocp_install settings below
@@ -127,10 +127,10 @@ gitops:
 helm_repo_name: "redhat-cop"
 helm_repo_url: "https://redhat-cop.github.io/helm-charts"
 chart_name: "operators-installer"
-chart_version: "latest"  # Can be pinned to specific version
+chart_version: "3.3.0"  # Can be pinned to specific version
 
 # GitOps operator configuration
-gitops_namespace: "openshift-gitops"
+gitops_namespace: "openshift-gitops-operator"
 gitops_operator_name: "openshift-gitops-operator"
 gitops_channel: "latest"  # stable, latest, etc.
 gitops_install_mode: "AllNamespaces"

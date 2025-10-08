@@ -3,17 +3,17 @@
   block:
     - name: Check kubeconfig file
       ansible.builtin.stat:
-        path: "{{ kubeconfig_path }}"
+        path: "{{ ocp_install.verify.kubeconfig_path }}"
       register: kubeconfig_check
 
     - name: Fail if kubeconfig not found
       ansible.builtin.fail:
-        msg: "kubeconfig file not found at {{ kubeconfig_path }}"
+        msg: "kubeconfig file not found at {{ ocp_install.verify.kubeconfig_path }}"
       when: not kubeconfig_check.stat.exists
 
     - name: Read kubeconfig content
       ansible.builtin.slurp:
-        src: "{{ kubeconfig_path }}"
+        src: "{{ ocp_install.verify.kubeconfig_path }}"
       register: kubeconfig_content
 
     - name: Set kubeconfig as fact
@@ -26,10 +26,10 @@
       ansible.builtin.command: >
         oc cluster-info
       environment:
-        KUBECONFIG: "{{ kubeconfig_path }}"
+        KUBECONFIG: "{{ ocp_install.verify.kubeconfig_path }}"
       register: cluster_info
-      retries: "{{ retry_attempts }}"
-      delay: "{{ retry_delay }}"
+      retries: "{{ validation.retry_attempts }}"
+      delay: "{{ validation.retry_delay }}"
       until: cluster_info.rc == 0
       changed_when: false
 
@@ -43,10 +43,10 @@
       ansible.builtin.command: >
         oc get nodes -o wide
       environment:
-        KUBECONFIG: "{{ kubeconfig_path }}"
+        KUBECONFIG: "{{ ocp_install.verify.kubeconfig_path }}"
       register: node_status
-      retries: "{{ retry_attempts }}"
-      delay: "{{ retry_delay }}"
+      retries: "{{ validation.retry_attempts }}"
+      delay: "{{ validation.retry_delay }}"
       until: node_status.rc == 0
       changed_when: false
 
@@ -54,7 +54,7 @@
       ansible.builtin.command: >
         oc get nodes --no-headers | grep -v Ready
       environment:
-        KUBECONFIG: "{{ kubeconfig_path }}"
+        KUBECONFIG: "{{ ocp_install.verify.kubeconfig_path }}"
       register: not_ready_nodes
       changed_when: false
       failed_when: not_ready_nodes.rc not in [0, 1]
@@ -68,7 +68,64 @@
         msg: "Warning: Some nodes are not ready: {{ not_ready_nodes.stdout_lines }}"
       when: not_ready_nodes.stdout_lines | length > 0
 
-- name: Validate cluster operators
+- name: List and count cluster nodes
+  block:
+    - name: Get detailed node information
+      ansible.builtin.command: >
+        oc get nodes -o json
+      environment:
+        KUBECONFIG: "{{ ocp_install.verify.kubeconfig_path }}"
+      register: node_list
+      retries: "{{ validation.node_retries }}"
+      delay: "{{ validation.node_delay }}"
+      until: >-
+        node_list.rc == 0 and (node_list.stdout | from_json |
+          json_query("items[?status.conditions[?type=='Ready'].status | [0]=='True']") |
+          length) >= (validation.expected_nodes | default(1) | int)
+      changed_when: false
+      failed_when: node_list.rc != 0
+
+    - name: Capture node readiness facts
+      ansible.builtin.set_fact:
+        node_summary:
+          ready_node_count: "{{ (node_list.stdout | from_json | json_query('items[?status.conditions[?type==`Ready`].status | [0]==`True`]') | length) }}"
+          expected_node_count: "{{ validation.expected_nodes }}"
+          total_node_count: "{{ (node_list.stdout | from_json | json_query('items') | length) }}"
+
+    - name: Display node readiness status
+      ansible.builtin.debug:
+        msg: |
+          "Ready nodes: {{ node_summary.ready_node_count }}"
+          "Expected nodes: {{ node_summary.expected_node_count }}"
+          "Total nodes: {{ node_summary.total_node_count }}"
+
+    - name: Display detailed node information
+      ansible.builtin.debug:
+        msg:
+          - "=== Detailed Node Information ==="
+          - "{{ node_list | to_nice_json }}"
+
+    - name: Parse node JSON data
+      ansible.builtin.set_fact:
+        nodes_data: "{{ node_list.stdout | from_json }}"
+
+    - name: Save node summary to file
+      ansible.builtin.copy:
+        content: |
+          # OpenShift Cluster Node Summary
+          Cluster: {{ install_config.cluster_name }}
+
+          ## Node Counts
+          Total Nodes: {{ node_summary.total_node_count }}
+          Ready Nodes: {{ node_summary.ready_node_count }}
+          Ready Percentage: {{ ((node_summary.ready_node_count | int / node_summary.total_node_count | int) * 100) | round(2) }}%
+
+          ## Node Details
+          Nodes: "{{ nodes_data.items | json_query('[].metadata.name') }}"
+        dest: "{{ install_dir }}/node-summary.txt"
+        mode: '0755'
+
+- name: Validate cluster operators                  # Cluster Operators
   block:
     - name: Get cluster operator status
       ansible.builtin.command:
@@ -81,10 +138,10 @@
             {.status.conditions[?(@.type=="Degraded")].status}{"\n"}
           {end}'
       environment:
-        KUBECONFIG: "{{ kubeconfig_path }}"
+        KUBECONFIG: "{{ ocp_install.verify.kubeconfig_path }}"
       register: operator_status
-      retries: "{{ retry_attempts | default(30) }}"
-      delay: "{{ retry_delay | default(30) }}"
+      retries: "{{ validation.retry_attempts | default(30) }}"
+      delay: "{{ validation.retry_delay | default(30) }}"
       until:
         - operator_status.rc == 0
         - operator_status.stdout | length > 0
@@ -95,7 +152,7 @@
       ansible.builtin.command: >
         oc get clusteroperators --no-headers | grep -v Available
       environment:
-        KUBECONFIG: "{{ kubeconfig_path }}"
+        KUBECONFIG: "{{ ocp_install.verify.kubeconfig_path }}"
       register: degraded_operators
       changed_when: false
       failed_when: false
@@ -109,15 +166,15 @@
         msg: "Warning: Some operators are degraded: {{ degraded_operators.stdout_lines }}"
       when: degraded_operators.stdout_lines | length > 0
 
-- name: Validate cluster version
+- name: Validate cluster version                       # Cluster Version
   block:
     - name: Wait for cluster to be accessible
       ansible.builtin.command: oc get clusterversion
       environment:
-        KUBECONFIG: "{{ kubeconfig_path }}"
+        KUBECONFIG: "{{ ocp_install.verify.kubeconfig_path }}"
       register: cluster_version
-      retries: "{{ retry_attempts | default(10) }}"
-      delay: "{{ retry_delay | default(30) }}"
+      retries: "{{ validation.retry_attempts | default(10) }}"
+      delay: "{{ validation.retry_delay | default(30) }}"
       until: cluster_version.rc == 0
       changed_when: false
       failed_when: cluster_version.rc != 0
@@ -132,7 +189,7 @@
       ansible.builtin.command: >
         oc get clusterversion --no-headers | awk '{print $3}' | grep -v True
       environment:
-        KUBECONFIG: "{{ kubeconfig_path }}"
+        KUBECONFIG: "{{ ocp_install.verify.kubeconfig_path }}"
       register: update_status
       changed_when: false
       failed_when: false
@@ -142,27 +199,27 @@
         msg: "Warning: Cluster has pending updates"
       when: update_status.stdout_lines | length > 0
 
-- name: Backup kubeconfig
+- name: Backup kubeconfig                                     # Backup kubeconfig
   block:
     - name: Create kubeconfig backup directory
       ansible.builtin.file:
-        path: "{{ kubeconfig_backup_path }}"
+        path: "{{ ocp_install.verify.kubeconfig_backup_path }}"
         state: directory
         mode: '0755'
 
     - name: Create timestamped kubeconfig backup
       ansible.builtin.copy:
-        src: "{{ kubeconfig_path }}"
-        dest: "{{ kubeconfig_backup_path }}/kubeconfig-{{ ansible_date_time.iso8601_basic_short }}"
+        src: "{{ ocp_install.verify.kubeconfig_path }}"
+        dest: "{{ ocp_install.verify.kubeconfig_backup_path }}/kubeconfig-{{ ansible_date_time.iso8601_basic_short }}"
         mode: '0600'
 
     - name: Create symlink to latest kubeconfig
       ansible.builtin.file:
-        src: "{{ kubeconfig_backup_path }}/kubeconfig-{{ ansible_date_time.iso8601_basic_short }}"
-        dest: "{{ kubeconfig_backup_path }}/kubeconfig-latest"
+        src: "{{ ocp_install.verify.kubeconfig_backup_path }}/kubeconfig-{{ ansible_date_time.iso8601_basic_short }}"
+        dest: "{{ ocp_install.verify.kubeconfig_backup_path }}/kubeconfig-latest"
         state: link
 
-- name: Generate cluster access information
+- name: Generate cluster access information                     # Generate cluster access information
   block:
     - name: Extract cluster information from kubeconfig
       ansible.builtin.set_fact:
@@ -190,11 +247,11 @@
           cluster_name: "{{ install_config.cluster_name }}"
           api_server: "{{ cluster_info.server }}"
           console_url: "{{ console_url }}"
-          kubeconfig_path: "{{ kubeconfig_path }}"
-          kubeconfig_backup_path: "{{ kubeconfig_backup_path }}/kubeconfig-latest"
+          kubeconfig_path: "{{ ocp_install.verify.kubeconfig_path }}"
+          kubeconfig_backup_path: "{{ ocp_install.verify.kubeconfig_backup_path }}/kubeconfig-latest"
           kubeadmin_password: "{{ kubeadmin_password_data }}"
           access_commands:
-            - "export KUBECONFIG={{ kubeconfig_path }}"
+            - "export KUBECONFIG={{ ocp_install.verify.kubeconfig_path }}"
             - "oc login -u kubeadmin -p {{ kubeadmin_password_data }}"
             - "oc get nodes"
             - "oc get clusteroperators"
@@ -227,18 +284,18 @@
           Username: kubeadmin
           Password: {{ cluster_access_summary.kubeadmin_password }}
         dest: "{{ install_dir }}/cluster-access-info.txt"
-        mode: '0644'
+        mode: '0755'
 
     - name: Save kubeconfig to user home directory
       ansible.builtin.copy:
-        src: "{{ kubeconfig_path }}"
+        src: "{{ ocp_install.verify.kubeconfig_path }}"
         dest: "{{ ansible_env.HOME }}/.kube/config"
         mode: '0600'
         backup: true
 
     - name: Create kubeconfig symlink in project directory
       ansible.builtin.file:
-        src: "{{ kubeconfig_path }}"
+        src: "{{ ocp_install.verify.kubeconfig_path }}"
         dest: "{{ playbook_dir }}/kubeconfig"
         state: link
 
@@ -249,6 +306,7 @@
       ansible.builtin.shell: >
         oc get nodes -o name | wc -l
       environment:
+        KUBECONFIG: "{{ ocp_install.verify.kubeconfig_path }}"
       register: final_node_count
       changed_when: false
       ignore_errors: false
@@ -256,9 +314,9 @@
 
     - name: Run final operator health check
       ansible.builtin.shell: >
-        oc get clusteroperators --no-headers | grep Available | wc -l
+        oc get clusteroperators --no-headers | wc -l
       environment:
-        KUBECONFIG: "{{ kubeconfig_path }}"
+        KUBECONFIG: "{{ ocp_install.verify.kubeconfig_path }}"
       register: final_operator_count
       changed_when: false
 
@@ -267,7 +325,7 @@
         validation_summary:
           cluster_name: "{{ install_config.cluster_name }}"
           total_nodes: "{{ final_node_count.stdout }}"
-          available_operators: "{{ final_operator_count.stdout }}"
+          total_operators: "{{ final_operator_count.stdout }}"
           kubeconfig_ready: true
           cluster_accessible: true
           validation_timestamp: "{{ ansible_date_time.iso8601 }}"
@@ -283,7 +341,7 @@
           Validation Time: {{ validation_summary.validation_timestamp }}
           Cluster Name: {{ validation_summary.cluster_name }}
           Total Nodes: {{ validation_summary.total_nodes }}
-          Available Operators: {{ validation_summary.available_operators }}
+          Total Operators: {{ validation_summary.total_operators }}
           kubeconfig Ready: {{ validation_summary.kubeconfig_ready }}
           Cluster Accessible: {{ validation_summary.cluster_accessible }}
           Status: {{ 'PASSED' if validation_summary.cluster_accessible else 'FAILED' }}
@@ -295,7 +353,7 @@
       block:
         - name: Check kubeconfig file
           ansible.builtin.stat:
-            path: "{{ kubeconfig_path }}"
+            path: "{{ ocp_install.verify.kubeconfig_path }}"
           register: kubeconfig_debug
 
         - name: Display debug information
@@ -303,7 +361,7 @@
             msg:
               - "Cluster validation failed"
               - "kubeconfig exists: {{ kubeconfig_debug.stat.exists | default(false) }}"
-              - "kubeconfig path: {{ kubeconfig_path }}"
+              - "kubeconfig path: {{ ocp_install.verify.kubeconfig_path }}"
 
         - name: Fail with validation error
           ansible.builtin.fail:
