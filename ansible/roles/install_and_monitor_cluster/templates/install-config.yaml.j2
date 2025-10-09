@@ -56,19 +56,19 @@ platform:
     - {{ ingress_vip }}
 {% endfor %}
     failureDomains:
-    - name: {{ install_config.failure_domains.name | default('generated-failure-domain') }}
-      region: {{ install_config.failure_domains.region | default('generated-region') }}
-      server: {{ install_config.failure_domains.vcenter_server | default('dc1-p-a-vcenter1.corp.company.com') }}
+    - name: {{ platform_vsphere.failure_domains.name | default('generated-failure-domain') }}
+      region: {{ platform_vsphere.failure_domains.region | default('generated-region') }}
+      server: {{ platform_vsphere.failure_domains.vcenter_server | default('dc1-p-a-vcenter1.corp.company.com') }}
       topology:
-        computeCluster: {{ install_config.failure_domains.compute_cluster | default('/DC1-Chicago/host/DC1-ESX-LINUX-NONPROD-CLUSTER1') }}
-        datacenter: {{ install_config.failure_domains.datacenter | default('DC1-Chicago') }}
-        datastore: {{ install_config.failure_domains.datastore | default('/DC1-Chicago/datastore/DC1-NFS01-ESX-REDHAT-NONPROD-DS1') }}
+        computeCluster: {{ platform_vsphere.failure_domains.compute_cluster | default('/DC1-Chicago/host/DC1-ESX-LINUX-NONPROD-CLUSTER1') }}
+        datacenter: {{ platform_vsphere.failure_domains.datacenter | default('DC1-Chicago') }}
+        datastore: {{ platform_vsphere.failure_domains.datastore | default('/DC1-Chicago/datastore/DC1-NFS01-ESX-REDHAT-NONPROD-DS1') }}
         networks:
-{% for network in platform_vsphere.failure_domain.topology.networks | default(['QA-LINUX-NONPROD']) %}
+{% for network in platform_vsphere.failure_domains.topology.networks | default(['QA-LINUX-NONPROD']) %}
         - {{ network }}
 {% endfor %}
         resourcePool: {{ resource_pool | default('/DC1-Chicago/host/DC1-ESX-LINUX-NONPROD-CLUSTER1/Resources') }}
-      zone: {{ platform.vsphere.failureDomains.zone | default('generated-zone') }}
+      zone: {{ platform_vsphere.failure_domains.zone | default('generated-zone') }}
     vcenters:
     - datacenters:
 {% for dc in platform_vsphere.vcenters.datacenters | default(['DC1-Chicago']) %}
