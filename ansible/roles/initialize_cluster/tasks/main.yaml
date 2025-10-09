@@ -36,7 +36,6 @@
     dest: "{{ playbook_dir }}/install-dir/install-config.yaml.orig"
     mode: '0664'
 
-# TESTING PURPOSES ONLY - REMOVE COMMENTS LATER
-# - name: Initialize IPI Cluster installation
-#   ansible.builtin.command: "/usr/local/bin/openshift-install create cluster --dir={{ playbook_dir }}/install-dir --log-level={{ ocp_install.log_level }}"
-#   changed_when: false
+- name: Initialize IPI Cluster installation
+  ansible.builtin.command: "/usr/local/bin/openshift-install create cluster --dir={{ playbook_dir }}/install-dir --log-level={{ ocp_install.log_level }}"
+  changed_when: false

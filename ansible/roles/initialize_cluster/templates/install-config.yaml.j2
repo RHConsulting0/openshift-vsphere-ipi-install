@@ -64,11 +64,11 @@ platform:
         datacenter: {{ install_config.failure_domains.datacenter | default('DC1-Chicago') }}
         datastore: {{ install_config.failure_domains.datastore | default('/DC1-Chicago/datastore/DC1-NFS01-ESX-REDHAT-NONPROD-DS1') }}
         networks:
-{% for network in platform_vsphere.failure_domain.topology.networks | default(['QA-LINUX-NONPROD']) %}
+{% for network in platform_vsphere.failure_domains.topology.networks | default(['QA-LINUX-NONPROD']) %}
         - {{ network }}
 {% endfor %}
         resourcePool: {{ resource_pool | default('/DC1-Chicago/host/DC1-ESX-LINUX-NONPROD-CLUSTER1/Resources') }}
-      zone: {{ platform.vsphere.failureDomains.zone | default('generated-zone') }}
+      zone: {{ platform.vsphere.failure_domains.zone | default('generated-zone') }}
     vcenters:
     - datacenters:
 {% for dc in platform_vsphere.vcenters.datacenters | default(['DC1-Chicago']) %}
