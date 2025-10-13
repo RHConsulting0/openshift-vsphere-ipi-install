@@ -1,0 +1,159 @@
+---
+- name: Pre-inject ESO vault access secret
+  when: vault_service.use_vault
+  kubernetes.core.k8s:
+    state: present
+    template: "day2/.init/configure-eso.j2.yaml"
+
+- name: Install OpenShift GitOps operator
+  kubernetes.core.k8s:
+    definition: "{{ lookup('kubernetes.core.kustomize', dir='day2/.init/' + managing_cluster.foundation_cluster + '/openshift-gitops-operator', enable_helm=True) }}"
+    wait: true
+  register: installOpenShiftGitopsOperatorResult
+
+- name: Install OpenShift GitOps operator result output (enable -v to see)
+  ansible.builtin.debug:
+    var: installOpenShiftGitopsOperatorResult
+    verbosity: 1
+
+- name: Wait for CRD established | ArgoCD
+  kubernetes.core.k8s_info:
+    kind: CustomResourceDefinition
+    api_version: apiextensions.k8s.io/v1
+    name: argocds.argoproj.io
+    wait: true
+    wait_timeout: 300
+    wait_condition:
+      type: Established
+      status: True
+      reason: InitialNamesAccepted
+
+- name: Wait for CRD established | Application
+  kubernetes.core.k8s_info:
+    kind: CustomResourceDefinition
+    api_version: apiextensions.k8s.io/v1
+    name: applications.argoproj.io
+    wait: true
+    wait_timeout: 300
+    wait_condition:
+      type: Established
+      status: True
+      reason: InitialNamesAccepted
+
+- name: Wait for Namespace | openshift-gitops
+  kubernetes.core.k8s_info:
+    kind: Namespace
+    api_version: v1
+    name: openshift-gitops
+    wait: true
+    wait_timeout: 300
+
+- name: Configure cluster OpenShift GitOps (ArgoCD)
+  kubernetes.core.k8s:
+    definition: "{{ lookup('kubernetes.core.kustomize', dir='day2/.init/' + managing_cluster.foundation_cluster + '/openshift-gitops', enable_helm=True) }}"
+    wait: true
+  register: configureClusterOpenShiftGitops
+
+- name: Configure cluster OpenShift GitOps (ArgoCD) result output (enable -v to see)
+  ansible.builtin.debug:
+    var: configureClusterOpenShiftGitops
+    verbosity: 1
+
+- name: Wait for ArgoCD AppProjects
+  kubernetes.core.k8s_info:
+    kind: AppProject
+    api_version: argoproj.io/v1alpha1
+    name: "{{ appproject }}"
+    namespace: openshift-gitops
+    wait: true
+    wait_timeout: 300
+  loop:
+    - cluster-management
+    - tenant-management
+  loop_control:
+    loop_var: appproject
+
+- name: Install Application to initialize gitops reconciliation loop
+  kubernetes.core.k8s:
+    definition: "{{ lookup('kubernetes.core.kustomize', dir='day2/.init/' + managing_cluster.foundation_cluster + '/foundation-cluster-management-root-application', enable_helm=True) }}"
+    wait: true
+  register: installApplicationResult
+
+- name: Install Application result output (enable -v to see)
+  ansible.builtin.debug:
+    var: installApplicationResult
+    verbosity: 1
+
+- name: Wait for ArgoCD Applications in openshift-gitops to be healthy and synced (10 second delay between attempts, time out at 20 minutes)
+  kubernetes.core.k8s_info:
+    kind: Application
+    api_version: argoproj.io/v1alpha1
+    namespace: openshift-gitops
+  register: applications
+  retries: 120
+  delay: 10
+  until: >-
+    (
+      (
+        applications.resources |
+        rejectattr('status.health.status', 'defined') |
+        map(attribute='metadata') |
+        map(attribute='name') |
+        list
+      ) +
+      (
+        applications.resources |
+        selectattr('status.health.status', 'defined') |
+        rejectattr('status.health.status', 'eq', 'Healthy') |
+        map(attribute='metadata') |
+        map(attribute='name') |
+        list
+      ) +
+      (
+        applications.resources |
+        rejectattr('status.sync.status', 'defined') |
+        map(attribute='metadata') |
+        map(attribute='name') |
+        list
+      ) +
+      (
+        applications.resources |
+        selectattr('status.sync.status', 'defined') |
+        rejectattr('status.sync.status', 'eq', 'Synced') |
+        map(attribute='metadata') |
+        map(attribute='name') |
+        list
+      )
+    ) |
+    length == 0
+  failed_when: false
+
+- name: Get list of ArgoCD Applications in openshift-gitops that are still not healthy and synced
+  ansible.builtin.set_fact:
+    unhealthy_applications: >-
+      {{
+        (
+          (
+            applications.resources |
+            rejectattr('status.health.status', 'eq', 'Healthy') |
+            map(attribute='metadata') |
+            map(attribute='name') |
+            list
+          ) +
+          (
+            applications.resources |
+            rejectattr('status.sync.status', 'eq', 'Synced') |
+            map(attribute='metadata') |
+            map(attribute='name') |
+            list
+          )
+        )
+      }}
+
+- name: Verify after waiting all ArgoCD Applications in openshift-gitops are healthy and synced
+  ansible.builtin.assert:
+    that:
+      unhealthy_applications | length == 0
+    quiet: false
+    fail_msg: "Failed due to ArgoCD Applications in openshift-gitops still not being healthy and synced: {{ unhealthy_applications }}"
+    success_msg: "All ArgoCD Applications in openshift-gitops are healthy and synced"

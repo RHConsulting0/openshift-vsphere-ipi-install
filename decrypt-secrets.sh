@@ -14,25 +14,93 @@ RESET="\033[0m"
 
 # Show usage if help requested
 show_usage() {
-    echo "Usage: $0"
-    echo ""
-    echo "Decrypts sensitive files using ansible-vault in a Podman container"
-    echo ""
-    echo "WARNING: Creates unencrypted copies of sensitive files on filesystem"
-    echo "Use only in secure environments and clean up afterwards"
-    echo ""
-    echo "Files processed:"
-    echo "  • SSH private keys (RSA and Ed25519)"
-    echo "  • SSL certificates and CA bundles"
-    echo "  • vSphere authentication credentials"
-    echo "  • Pull secret verification"
-    echo ""
-    echo "Prerequisites:"
-    echo "  • secrets-handler.sh in same directory"
-    echo "  • vault-password.txt file"
-    echo "  • Podman container runtime"
-    echo ""
-    echo "Use -h, --help, or help for detailed information"
+    cat << EOF
+Usage: $0 [OPTIONS]
+
+DESCRIPTION:
+    Decrypts multiple sensitive files using ansible-vault in a Podman container.
+    This script is a batch processor that automatically decrypts all configured
+    sensitive files required for OpenShift cluster provisioning. It performs
+    individual vault operations within a containerized execution environment.
+
+WARNING: 
+    Creates unencrypted copies of sensitive files on the filesystem.
+    Use only in secure environments and clean up afterwards.
+
+FILES PROCESSED:
+    • SSH private keys (RSA and Ed25519)
+    • SSL certificates and CA bundles  
+    • vSphere authentication credentials
+    • Pull secret verification
+    • Other encrypted secrets in the project
+
+CONTAINER INTEGRATION:
+    • Uses execution environment container for consistent tooling
+    • Automatically mounts project directories with proper SELinux context
+    • Provides isolated environment for ansible-vault operations
+    • Runs with root privileges for system-level operations
+
+VOLUME MOUNTS:
+    • ./ansible/ → /runner/project (Ansible project directory)
+    • ./all-clusters-resources/ → /runner/all-clusters-resources (Cluster resources)
+
+PREREQUISITES:
+    • Podman must be installed and running
+    • Execution environment image 'ocp-provision-ee:latest' must be built
+    • vault-password.txt file in all-clusters-resources/
+    • Required encrypted files must exist in their expected locations
+
+BUILD EXECUTION ENVIRONMENT:
+    cd automation-ee/ocp-provision-ee/
+    ./builder.sh
+
+EXAMPLES:
+    # Decrypt all configured sensitive files
+    ./decrypt-secrets.sh
+    
+    # Show help and usage information
+    ./decrypt-secrets.sh --help
+    ./decrypt-secrets.sh -h
+    ./decrypt-secrets.sh help
+    
+    # Typical workflow for OpenShift cluster provisioning
+    # 1. Build execution environment first
+    cd automation-ee/ocp-provision-ee/
+    ./builder.sh
+    cd ../../
+    
+    # 2. Decrypt all required secrets
+    ./decrypt-secrets.sh
+    
+    # 3. Run cluster installation (secrets now available)
+    ./ee-bash.sh lab lab
+
+OPTIONS:
+    -h, --help    Show this help message
+
+WORKFLOW:
+    1. Validates prerequisites and container environment
+    2. Iterates through predefined list of encrypted files
+    3. Executes ansible-vault decrypt commands in container
+    4. Displays decrypted content for verification
+    5. Reports success/failure status for each operation
+
+SECURITY CONSIDERATIONS:
+    • All operations use encrypted vault password file
+    • Container provides isolated execution environment
+    • Proper SELinux context for file access
+    • No plain text secrets stored in memory
+    • Secure file handling with proper permissions
+    • Files are decrypted to host filesystem (clean up required)
+
+TROUBLESHOOTING:
+    • Ensure execution environment image is built
+    • Check file permissions and SELinux context
+    • Verify vault password file accessibility
+    • Review container logs for detailed error information
+    • Ensure all required encrypted files exist
+
+EOF
 }
 
 case "${1:-}" in
@@ -43,14 +111,13 @@ case "${1:-}" in
 esac
 
 count=0
+success_count=0
 
 if [ "${BASH_SOURCE[0]}" != "$0" ]; then
   echo -e "${RED}ERROR:${RESET} This script must be executed, not sourced."
   echo -e "Run it like: ${BRIGHTYELLOW}./decrypt-secrets.sh${RESET}"
   return 1 2>/dev/null || exit 1
-fi  
-
-count=0
+fi
 
 source ./secrets-handler.sh
 
@@ -71,6 +138,12 @@ items=(
 )
 
 echo -e "\n${BRIGHTCYAN}DECRYPT FILES USING ANSIBLE-VAULT IN A CONTAINER...${RESET}\n"
+echo -e "${CYAN}Processing ${#items[@]} encrypted files:${RESET}"
+for item in "${items[@]}"; do
+  HOST_FILE="${item%%:*}"  # part before colon
+  echo -e "  • ${HOST_FILE##*/}"  # show just filename
+done
+echo ""
 
 for item in "${items[@]}"; do
   HOST_FILE="${item%%:*}"  # part before colon
@@ -83,6 +156,7 @@ for item in "${items[@]}"; do
   # Run vault_podman
   if vault_podman "$DECRYPT" "$EE_FILE" "$EE_VAULT_PWD"; then
     echo -e "${GREEN}SUCCESS:${RESET} Vault operation for $EE_FILE"
+    ((success_count++))
   else
     echo -e "${RED}ERROR:${RESET} Vault operation failed for $EE_FILE"
     ((count++))
@@ -109,4 +183,11 @@ else
   echo -e "${RED}File not found:${RESET} $HOST_PULL_SECRET"
 fi
 
-echo -e "\n${GREEN}COMPLETE${RESET}\n"
+echo -e "\n${GREEN}DECRYPTION COMPLETE${RESET}"
+echo -e "${CYAN}Summary:${RESET}"
+echo -e "  • Total files processed: ${#items[@]}"
+echo -e "  • Files decrypted successfully: $success_count"
+echo -e "  • Files failed: $((${#items[@]} - success_count))"
+echo -e "  • Check output above for any errors"
+echo -e "\n${YELLOW}REMINDER:${RESET} Clean up decrypted files when done for security"
+echo ""

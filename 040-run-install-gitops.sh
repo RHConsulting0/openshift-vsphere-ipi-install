@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
-# 030-run-install-and-monitor.sh - OpenShift Cluster Installation and Monitoring Script
-# Complete OpenShift installation with monitoring and kubeconfig management
+# 040-run-install-gitops.sh - OpenShift GitOps Operator Installation Script
+# Install GitOps operator using operators-installer Helm chart
 
 # Usage function
 usage() {
@@ -9,90 +9,91 @@ usage() {
 Usage: $0 <cluster> <env>
 
 DESCRIPTION:
-    Complete OpenShift cluster installation with real-time monitoring and kubeconfig management.
-    This script runs the install_and_monitor_cluster.yaml playbook to perform the full cluster
-    installation, then validates the installation and manages kubeconfig files.
+    Install OpenShift GitOps operator using the operators-installer Helm chart.
+    This script runs the install_gitops_operator.yaml playbook to deploy the
+    OpenShift GitOps operator and ArgoCD instance for GitOps-based application delivery.
 
 WORKFLOW:
-    1. Validates prerequisites and dependencies
-    2. Installs OpenShift cluster with real-time monitoring
-    3. Validates cluster installation and health
-    4. Manages kubeconfig files and access information
-    5. Generates installation and validation summaries
-    6. Provides cluster access information
+    1. Validates prerequisites and cluster connectivity
+    2. Checks Helm availability in execution environment
+    3. Installs OpenShift GitOps operator using Helm chart
+    4. Configures ArgoCD instance and routes
+    5. Verifies installation and operator status
+    6. Provides access information and next steps
 
 PARAMETERS:
     cluster    Cluster identifier/name (e.g., lab, dev, prod)
     env        Environment identifier (e.g., lab, dev, prod)
 
 EXAMPLES:
-    $0 lab lab          # Install lab cluster in lab environment
-    $0 dev dev           # Install dev cluster in dev environment
-    $0 prod prod         # Install prod cluster in prod environment
+    $0 lab lab          # Install GitOps operator on lab cluster
+    $0 dev dev           # Install GitOps operator on dev cluster
+    $0 prod prod         # Install GitOps operator on prod cluster
 
 PREREQUISITES:
     - Podman must be installed and running
     - Execution environment image 'ocp-provision-ee:latest' must be built
-    - Cluster initialization must be completed (020-run-initialize-cluster.sh)
+    - Cluster installation must be completed (030-run-install-and-monitor.sh)
+    - Cluster must be accessible via kubeconfig
     - Cluster-specific variables must exist in ansible/group_vars/cluster/[cluster]/all.yaml
     - Environment-specific variables must exist in ansible/group_vars/env/[env]/all.yaml
     - Cluster secrets must exist in ansible/secrets/[cluster]/secrets.yaml
     - Vault password file must exist at all-clusters-resources/vault-password.txt
-    - install-config.yaml must exist in ansible/install-dir/
 
 CONTAINER INTEGRATION:
     - Uses execution environment container for consistent tooling
     - Automatically mounts project directories with proper SELinux context
+    - Mounts kubeconfig for cluster access
     - Provides isolated environment for Ansible operations
     - Runs with root privileges for system-level operations
 
 ANSIBLE CONFIGURATION:
     - Inventory: ansible/inventory.yml
-    - Installation Playbook: ansible/install_and_monitor_cluster.yaml
-    - Validation Playbook: ansible/validate_cluster_and_kubeconfig.yaml
+    - Playbook: ansible/install_gitops_operator.yaml
     - Variables: Cluster, environment, and secrets configurations
     - Vault: Encrypted secrets and sensitive data
     - Verbosity: Maximum verbosity (-vvv) for detailed output
 
-INSTALLATION FEATURES:
-    - Real-time progress monitoring
-    - Automatic cluster health validation
-    - Kubeconfig management and backup
-    - Installation summary generation
-    - Cluster access information
-    - GitOps operator installation (optional)
+HELM INTEGRATION:
+    - Uses operators-installer Helm chart from redhat-cop repository
+    - Installs OpenShift GitOps operator in openshift-gitops namespace
+    - Configures ArgoCD instance with default settings
+    - Creates necessary routes and services
 
-OPTIONAL FEATURES:
-    - GitOps Operator Installation: Set INSTALL_GITOPS=true environment variable
-    - Custom monitoring intervals: Configure in playbook variables
-    - Extended validation: Additional cluster health checks
+INSTALLATION FEATURES:
+    - OpenShift GitOps operator installation
+    - ArgoCD instance configuration
+    - Route creation for web console access
+    - Operator subscription management
+    - Installation verification and status checks
 
 SECURITY CONSIDERATIONS:
     - All sensitive data encrypted using Ansible Vault
     - Container provides isolated execution environment
     - Proper SELinux context for file access
     - Vault password file protection
-    - Kubeconfig backup for recovery
+    - Kubeconfig mounted securely
 
 OPTIONS:
     -h, --help    Show this help message
 
 OUTPUT FILES:
-    - 030-install-output.out: Installation process output
-    - 030-validation-output.out: Validation process output
-    - ansible/install-dir/auth/kubeconfig: Cluster kubeconfig file
-    - ansible/kubeconfig-backup/: Kubeconfig backup directory
-    - ansible/install-dir/installation-summary.txt: Installation summary
-    - ansible/install-dir/cluster-access-info.txt: Cluster access information
-    - ansible/install-dir/validation-summary.txt: Validation summary
+    - 040-gitops-output.out: Installation process output
+    - ansible/gitops-installation-summary.txt: Installation summary
+    - ansible/templates/gitops-operator-values.yaml: Helm values file
+
+VERIFICATION:
+    - Operator subscription status
+    - ArgoCD instance health
+    - Pod status in openshift-gitops namespace
+    - Route accessibility
 
 TROUBLESHOOTING:
-    - Ensure cluster initialization was completed successfully
-    - Verify all required variable files exist
-    - Check vault password file accessibility
-    - Review cluster and environment variables
-    - Validate install-config.yaml configuration
-    - Check vSphere resource availability
+    - Ensure cluster installation was completed successfully
+    - Verify cluster connectivity and kubeconfig validity
+    - Check Helm availability in execution environment
+    - Review operator subscription status
+    - Validate ArgoCD instance configuration
 
 RELATED SCRIPTS:
     - This script is standalone and not related to other scripts in this project
@@ -125,20 +126,13 @@ PROJECT_DIR="$(pwd)"
 ANSIBLE_DIR="ansible"
 
 # Output files
-INSTALL_OUTPUT="030-install-output.out"
-VALIDATION_OUTPUT="030-validation-output.out"
+GITOPS_OUTPUT="040-gitops-output.out"
 
 echo "=========================================="
-echo "OpenShift vSphere IPI Installation & Monitoring"
+echo "GitOps Operator Installation"
 echo "Cluster: $CLUSTER"
 echo "Environment: $ENV"
-echo "GitOps Installation: ${INSTALL_GITOPS:-false}"
-echo "Timestamp: $(date +%Y%m%d%H%M%S)"
 echo "=========================================="
-echo ""
-echo "To enable GitOps operator installation, set:"
-echo "export INSTALL_GITOPS=true"
-echo ""
 
 # Validate prerequisites
 validate_prerequisites() {
@@ -171,7 +165,7 @@ validate_prerequisites() {
     
     if [ ! -d "$PROJECT_DIR/all-clusters-resources" ]; then
         echo "ERROR: all-clusters-resources directory not found"
-        echo "Please run cluster initialization first: ./030-run-install-and-monitor.sh $CLUSTER $ENV"
+        echo "Please ensure cluster prerequisites are met"
         exit 1
     fi
     
@@ -223,61 +217,101 @@ validate_prerequisites() {
         exit 1
     fi
     
-    # # Check if install-config.yaml exists
-    # if [ ! -f "$PROJECT_DIR/$ANSIBLE_DIR/install-dir/install-config.yaml" ]; then
-    #     echo "ERROR: install-config.yaml not found: $PROJECT_DIR/$ANSIBLE_DIR/install-dir/install-config.yaml"
-    #     echo ""
-    #     echo "Please run cluster initialization first: ./020-run-initialize-cluster.sh $CLUSTER $ENV"
-    #     exit 1
-    # fi
-    
-    # Check if installation playbook exists
-    if [ ! -f "$PROJECT_DIR/$ANSIBLE_DIR/install_and_monitor_cluster.yaml" ]; then
-        echo "ERROR: Installation playbook not found: $PROJECT_DIR/$ANSIBLE_DIR/install_and_monitor_cluster.yaml"
+    # Check if GitOps installation playbook exists
+    if [ ! -f "$PROJECT_DIR/$ANSIBLE_DIR/install_gitops_operator.yaml" ]; then
+        echo "ERROR: GitOps installation playbook not found: $PROJECT_DIR/$ANSIBLE_DIR/install_gitops_operator.yaml"
         echo ""
-        echo "Please ensure the installation playbook exists"
-        exit 1
-    fi
-    
-    # Check if validation playbook exists
-    if [ ! -f "$PROJECT_DIR/$ANSIBLE_DIR/validate_cluster_and_kubeconfig.yaml" ]; then
-        echo "ERROR: Validation playbook not found: $PROJECT_DIR/$ANSIBLE_DIR/validate_cluster_and_kubeconfig.yaml"
-        echo ""
-        echo "Please ensure the validation playbook exists"
+        echo "Please ensure the GitOps installation playbook exists"
         exit 1
     fi
     
     echo "Prerequisites validation passed"
 }
 
+# Check cluster connectivity
+check_cluster_access() {
+    echo "Checking cluster connectivity..."
+    
+    # Check if kubeconfig exists
+    if [ ! -f "$PROJECT_DIR/$ANSIBLE_DIR/install-dir/auth/kubeconfig" ]; then
+        echo "ERROR: kubeconfig not found at $PROJECT_DIR/$ANSIBLE_DIR/install-dir/auth/kubeconfig"
+        echo ""
+        echo "Please ensure cluster prerequisites are met and kubeconfig is available"
+        exit 1
+    fi
+    
+    # Test cluster connectivity using execution environment
+    echo "Testing cluster connectivity..."
+    podman run --rm \
+      --ipc=host \
+      --user=root \
+      --group-add=root \
+      -v "$PROJECT_DIR/$ANSIBLE_DIR:/runner/project:Z" \
+      -v "$PROJECT_DIR/all-clusters-resources:/runner/all-clusters-resources:Z" \
+      -v "$PROJECT_DIR/$ANSIBLE_DIR/install-dir/auth/kubeconfig:/root/.kube/config:Z" \
+      "$EXECUTION_CONTAINER" \
+      oc cluster-info &> /dev/null
+      
+    if [ $? -ne 0 ]; then
+        echo "ERROR: Cannot connect to cluster"
+        echo ""
+        echo "Please check:"
+        echo "  1. Cluster is running and accessible"
+        echo "  2. kubeconfig is valid and not expired"
+        echo "  3. Network connectivity to cluster API server"
+        echo "  4. Cluster prerequisites are met"
+        exit 1
+    fi
+    
+    echo "Cluster connectivity verified"
+}
+
+# Check Helm availability
+check_helm_availability() {
+    echo "Checking Helm availability in execution environment..."
+    
+    # Check if Helm is available in execution environment
+    podman run --rm \
+      --ipc=host \
+      --user=root \
+      --group-add=root \
+      -v "$PROJECT_DIR/$ANSIBLE_DIR:/runner/project:Z" \
+      -v "$PROJECT_DIR/all-clusters-resources:/runner/all-clusters-resources:Z" \
+      "$EXECUTION_CONTAINER" \
+      helm version --short &> /dev/null
+      
+    if [ $? -ne 0 ]; then
+        echo "ERROR: Helm not available in execution environment"
+        echo ""
+        echo "Please ensure Helm is installed in the execution environment:"
+        echo "  cd automation-ee/ocp-provision-ee/"
+        echo "  ./builder.sh"
+        echo ""
+        exit 1
+    fi
+    
+    echo "Helm availability verified"
+}
+
 # Display configuration information
 show_configuration() {
     echo "=========================================="
-    echo "OpenShift Cluster Installation & Monitoring"
+    echo "GitOps Operator Installation"
     echo "=========================================="
     echo "Cluster: $CLUSTER"
     echo "Environment: $ENV"
     echo "Execution Container: $EXECUTION_CONTAINER"
     echo "Project Directory: $PROJECT_DIR"
     echo "Ansible Directory: $ANSIBLE_DIR"
-    echo "GitOps Installation: ${INSTALL_GITOPS:-false}"
+    echo "Kubeconfig: $ANSIBLE_DIR/install-dir/auth/kubeconfig"
     echo "=========================================="
     echo ""
-    
-    if [ "${INSTALL_GITOPS:-false}" != "true" ]; then
-        echo "To enable GitOps operator installation, set:"
-        echo "export INSTALL_GITOPS=true"
-        echo ""
-    fi
 }
 
-# Function to run installation playbook
-run_installation() {
-    echo "Starting OpenShift cluster installation..."
-    echo "This may take 30-60 minutes depending on your infrastructure."
-    
-    # Check if GitOps installation is enabled
-    INSTALL_GITOPS=${INSTALL_GITOPS:-false}
+# Function to run GitOps installation
+run_gitops_installation() {
+    echo "Starting GitOps operator installation..."
+    echo "This will install the OpenShift GitOps operator using the operators-installer Helm chart"
     
     podman run --rm \
       --ipc=host \
@@ -285,7 +319,7 @@ run_installation() {
       --group-add=root \
       -v "$PROJECT_DIR/$ANSIBLE_DIR:/runner/project:Z" \
       -v "$PROJECT_DIR/all-clusters-resources:/runner/all-clusters-resources:Z" \
-      -v "$PROJECT_DIR/provisioned-clusters:/runner/provisioned-clusters:Z" \
+      -v "$PROJECT_DIR/$ANSIBLE_DIR/install-dir/auth/kubeconfig:/root/.kube/config:Z" \
       -v "$PROJECT_DIR/day2:/runner/day2:Z" \
       "$EXECUTION_CONTAINER" \
       ansible-playbook -i /runner/project/inventory.yml \
@@ -293,14 +327,14 @@ run_installation() {
         -e @/runner/project/group_vars/env/${ENV}/default-vault.yaml \
         -e @/runner/project/group_vars/env/${ENV}/all.yaml \
         -e @/runner/project/secrets/${CLUSTER}/secrets.yaml \
-        -e install_gitops_operator=${INSTALL_GITOPS} \
         --vault-password-file=/runner/all-clusters-resources/vault-password.txt \
-        /runner/project/install_and_monitor_cluster.yaml -vvv
+        /runner/project/init_gitops.yaml -vvv
 }
 
-# Function to run validation playbook
-run_validation() {
-    echo "Validating cluster installation and managing kubeconfig..."
+
+run_gitops_installationORIG() {
+    echo "Starting GitOps operator installation..."
+    echo "This will install the OpenShift GitOps operator using the operators-installer Helm chart"
     
     podman run --rm \
       --ipc=host \
@@ -308,6 +342,7 @@ run_validation() {
       --group-add=root \
       -v "$PROJECT_DIR/$ANSIBLE_DIR:/runner/project:Z" \
       -v "$PROJECT_DIR/all-clusters-resources:/runner/all-clusters-resources:Z" \
+      -v "$PROJECT_DIR/$ANSIBLE_DIR/install-dir/auth/kubeconfig:/root/.kube/config:Z" \
       "$EXECUTION_CONTAINER" \
       ansible-playbook -i /runner/project/inventory.yml \
         -e @/runner/project/group_vars/cluster/${CLUSTER}/all.yaml \
@@ -315,42 +350,64 @@ run_validation() {
         -e @/runner/project/group_vars/env/${ENV}/all.yaml \
         -e @/runner/project/secrets/${CLUSTER}/secrets.yaml \
         --vault-password-file=/runner/all-clusters-resources/vault-password.txt \
-        /runner/project/validate_cluster_and_kubeconfig.yaml -vvv
+        /runner/project/install_gitops_operator.yaml -vvv
 }
 
 # Function to display results
 display_results() {
     echo ""
     echo "=========================================="
-    echo "Installation Complete!"
+    echo "GitOps Installation Complete!"
     echo "=========================================="
     
     # Check if installation summary exists
-    if [ -f "$ANSIBLE_DIR/install-dir/installation-summary.txt" ]; then
+    if [ -f "$ANSIBLE_DIR/gitops-installation-summary.txt" ]; then
         echo "Installation Summary:"
-        cat "$ANSIBLE_DIR/install-dir/installation-summary.txt"
-    fi
-    
-    echo ""
-    echo "Cluster Access Information:"
-    if [ -f "$ANSIBLE_DIR/install-dir/cluster-access-info.txt" ]; then
-        cat "$ANSIBLE_DIR/install-dir/cluster-access-info.txt"
+        cat "$ANSIBLE_DIR/gitops-installation-summary.txt"
     fi
     
     echo ""
     echo "Next Steps:"
-    echo "1. Set KUBECONFIG: export KUBECONFIG=$ANSIBLE_DIR/install-dir/auth/kubeconfig"
-    echo "2. Login to cluster: oc login -u kubeadmin -p <password>"
-    echo "3. Access console: https://console-openshift-console.apps.$CLUSTER.<base-domain>"
+    echo "1. Access ArgoCD console using the URL provided above"
+    echo "2. Login with the admin credentials"
+    echo "3. Configure Git repositories"
+    echo "4. Deploy applications using GitOps"
     echo ""
-    echo "Note: This script is standalone and completes the cluster installation process."
+    echo "Note: This script is standalone and completes the GitOps operator installation."
     echo ""
     echo "Files created:"
-    echo "- kubeconfig: $ANSIBLE_DIR/install-dir/auth/kubeconfig"
-    echo "- kubeconfig backup: $ANSIBLE_DIR/kubeconfig-backup/"
-    echo "- Installation summary: $ANSIBLE_DIR/install-dir/installation-summary.txt"
-    echo "- Cluster access info: $ANSIBLE_DIR/install-dir/cluster-access-info.txt"
-    echo "- Validation summary: $ANSIBLE_DIR/install-dir/validation-summary.txt"
+    echo "- Installation summary: $ANSIBLE_DIR/gitops-installation-summary.txt"
+    echo "- Values file: $ANSIBLE_DIR/templates/gitops-operator-values.yaml"
+    echo ""
+    echo "Useful commands:"
+    echo "- Check operator status: oc get subscription -n openshift-gitops"
+    echo "- Check ArgoCD pods: oc get pods -n openshift-gitops"
+    echo "- Get ArgoCD route: oc get route -n openshift-gitops"
+}
+
+# Function to verify installation
+verify_installation() {
+    echo "Verifying GitOps installation..."
+    
+    export KUBECONFIG="$ANSIBLE_DIR/install-dir/auth/kubeconfig"
+    
+    # Check operator subscription
+    echo "Checking operator subscription..."
+    oc get subscription openshift-gitops-operator -n openshift-gitops-operator
+    
+    # Check ArgoCD instance
+    echo "Checking ArgoCD instance..."
+    oc get argocd -n openshift-gitops
+    
+    # Check ArgoCD pods
+    echo "Checking ArgoCD pods..."
+    oc get pods -n openshift-gitops
+    
+    # Check ArgoCD route
+    echo "Checking ArgoCD route..."
+    oc get route -n openshift-gitops
+    
+    echo "Verification complete"
 }
 
 # Main execution
@@ -358,84 +415,56 @@ main() {
     # Validate prerequisites
     validate_prerequisites
     
+    # Check cluster connectivity
+    check_cluster_access
+    
+    # Check Helm availability
+    check_helm_availability
+    
     # Show configuration
     show_configuration
     
-    echo "Starting OpenShift cluster installation and monitoring..."
-    echo "This process includes installation, validation, and kubeconfig management."
+    echo "Starting GitOps operator installation..."
+    echo "This will install the OpenShift GitOps operator and ArgoCD instance."
     echo ""
     
-    # Run installation with monitoring
-    echo "Step 1: Installing and monitoring OpenShift cluster..."
-    echo "This may take 30-60 minutes depending on your infrastructure."
-    echo ""
-    
-    if run_installation 2>&1 | tee "$INSTALL_OUTPUT"; then
+    # Run GitOps installation
+    echo "Installing GitOps operator using Helm chart..."
+    if run_gitops_installation 2>&1 | tee "$GITOPS_OUTPUT"; then
         echo ""
         echo "=========================================="
-        echo "Installation completed successfully!"
+        echo "GitOps installation completed successfully!"
         echo "=========================================="
         echo ""
     else
         echo ""
         echo "=========================================="
-        echo "ERROR: Installation failed!"
+        echo "ERROR: GitOps installation failed!"
         echo "=========================================="
         echo ""
         echo "Please check the error messages above and resolve any issues."
         echo "Common issues:"
-        echo "  - Insufficient vSphere resources"
-        echo "  - Network connectivity problems"
-        echo "  - Configuration errors in install-config.yaml"
-        echo "  - Missing or incorrect variable files"
-        echo "  - Vault password or secrets issues"
+        echo "  - Cluster not accessible or not ready"
+        echo "  - Helm chart repository issues"
+        echo "  - Operator subscription problems"
+        echo "  - Insufficient cluster resources"
+        echo "  - Network connectivity issues"
         echo ""
-        echo "Check $INSTALL_OUTPUT for detailed error information."
+        echo "Check $GITOPS_OUTPUT for detailed error information."
         echo ""
         echo "Troubleshooting steps:"
-        echo "  1. Check vSphere resource availability and permissions"
-        echo "  2. Review install-config.yaml configuration"
-        echo "  3. Validate all variable files exist and are properly formatted"
-        echo "  4. Check vault password file accessibility"
+        echo "  1. Check cluster connectivity and kubeconfig validity"
+        echo "  2. Ensure Helm is available in execution environment"
+        echo "  3. Review operator subscription status"
+        echo "  4. Check cluster resource availability"
         echo "  5. Verify cluster prerequisites are met"
         echo ""
         exit 1
     fi
     
-    # Run validation and kubeconfig management
-    echo "Step 2: Validating cluster and managing kubeconfig..."
-    echo ""
-    
-    if run_validation 2>&1 | tee "$VALIDATION_OUTPUT"; then
-        echo ""
-        echo "=========================================="
-        echo "Validation completed successfully!"
-        echo "=========================================="
-        echo ""
-    else
-        echo ""
-        echo "=========================================="
-        echo "ERROR: Validation failed!"
-        echo "=========================================="
-        echo ""
-        echo "Please check the error messages above and resolve any issues."
-        echo "Common validation issues:"
-        echo "  - Cluster not fully ready"
-        echo "  - API server connectivity problems"
-        echo "  - Kubeconfig generation issues"
-        echo "  - Cluster operator failures"
-        echo ""
-        echo "Check $VALIDATION_OUTPUT for detailed error information."
-        echo ""
-        echo "Troubleshooting steps:"
-        echo "  1. Wait for cluster to be fully ready (may take additional time)"
-        echo "  2. Check cluster operator status"
-        echo "  3. Verify API server accessibility"
-        echo "  4. Review cluster logs for specific errors"
-        echo "  5. Ensure all prerequisites are met"
-        echo ""
-        exit 1
-    fi
+    # Verify installation
+    echo "Verifying GitOps installation..."
+    verify_installation
     
     # Display results
     display_results
@@ -444,7 +473,7 @@ main() {
 # Protect against sourcing – must be run, not sourced.
 if [ "${BASH_SOURCE[0]}" != "$0" ]; then
     echo "ERROR: This script must be executed, not sourced."
-    echo "Run it like: ./030-run-install-and-monitor.sh lab lab"
+    echo "Run it like: ./040-run-install-gitops.sh lab lab"
     return 1 2>/dev/null || exit 1
 fi
 

@@ -2,76 +2,90 @@
 
 A comprehensive containerized execution environment for OpenShift cluster installation, management, and day-2 operations on VMware vSphere using Installer-Provisioned Infrastructure (IPI).
 
-## Table of Contents
+## 📋 Table of Contents
 
-- [Overview](#overview)
-- [Quick Start](#quick-start)
-- [Project Structure](#project-structure)
-- [Execution Environment](#execution-environment)
-- [Prerequisites](#prerequisites)
-- [Building the Execution Environment](#building-the-execution-environment)
-- [Usage Examples](#usage-examples)
-- [Configuration](#configuration)
-- [Troubleshooting](#troubleshooting)
-- [Documentation](#documentation)
-- [Contributing](#contributing)
+- [Overview](#-overview)
+- [Quick Start](#-quick-start)
+- [Project Structure](#-project-structure)
+- [Execution Environment](#-execution-environment)
+- [Prerequisites](#-prerequisites)
+- [Building the Execution Environment](#-building-the-execution-environment)
+- [Usage Examples](#-usage-examples)
+- [Configuration](#-configuration)
+- [Day-2 Operations](#-day-2-operations)
+- [Troubleshooting](#-troubleshooting)
+- [Documentation](#-documentation)
+- [Contributing](#-contributing)
+- [License](#-license)
 
-## Overview
+## 🎯 Overview
 
-This automation execution environment provides a complete containerized solution for OpenShift cluster deployment and management. It includes all necessary tools, dependencies, and configurations required for:
+The OpenShift vSphere IPI Automation Execution Environment provides a complete, containerized solution for deploying and managing OpenShift Container Platform clusters on VMware vSphere infrastructure. This enterprise-grade solution leverages Ansible automation with containerized execution environments to ensure consistent, repeatable, and secure deployments.
 
-- **OpenShift Cluster Installation**: Complete IPI installation on VMware vSphere
-- **Cluster Management**: Day-2 operations and configuration management
-- **GitOps Operations**: ArgoCD and GitOps operator management
-- **Testing and Validation**: Manifest generation and cluster validation
-- **Security**: Encrypted secrets management and certificate handling
+### **Key Features**
 
-### Key Features
+- **🚀 Containerized Execution**: Consistent tooling across all environments
+- **🔧 Ansible Automation**: Comprehensive playbooks for cluster lifecycle management
+- **📦 Helm Integration**: Package management for applications and configurations
+- **🔐 Security-First**: Encrypted secrets management and secure configurations
+- **📊 Monitoring**: Built-in monitoring and validation capabilities
+- **🔄 GitOps Ready**: Integration with ArgoCD and Advanced Cluster Management
+- **📚 Comprehensive Documentation**: Complete guides and troubleshooting
 
-- **Containerized Environment**: All tools pre-installed and configured
-- **OpenShift Tools**: openshift-install, oc, kubectl (v4.18.23)
-- **Helm Support**: Helm v3.16.3 for chart management
-- **Kustomize Integration**: v5.5.0 for configuration management
-- **Policy Generator**: v1.15.0 for Open Cluster Management
-- **Ansible Collections**: Complete set of required collections
-- **Security**: SELinux support and proper file permissions
-- **Corporate Integration**: Pre-configured for ODFL environment
+### **Supported Operations**
 
-## Quick Start
+- **Cluster Installation**: Automated OpenShift cluster deployment
+- **Configuration Management**: Day-2 operations and cluster customization
+- **Secret Management**: Secure handling of sensitive data
+- **Monitoring & Validation**: Health checks and compliance validation
+- **GitOps Integration**: Automated configuration deployment
+- **Disaster Recovery**: Backup and recovery procedures
 
-### 1. Install Prerequisites
+## 🚀 Quick Start
+
+### **Prerequisites**
+
+- **Container Runtime**: Podman 4.0+ or Docker 20.10+
+- **OpenShift Access**: Red Hat OpenShift pull secret
+- **vSphere Environment**: VMware vSphere 7.0+ with appropriate permissions
+- **Network Access**: DNS resolution and load balancer configuration
+- **SSH Keys**: Key pair for cluster access
+
+### **5-Minute Setup**
+
 ```bash
-cd prep/
-./install_ansible_tools.sh
-```
+# 1. Clone the repository
+git clone <repository-url>
+cd openshift-vsphere-ipi-install/automation-ee
 
-### 2. Build Execution Environment
-```bash
-cd ocp-provision-ee/
+# 2. Install prerequisites
+cd prep
+./install-ansible-tools.sh
+
+# 3. Build execution environment
+cd ../ocp-provision-ee
 ./builder.sh
+
+# 4. Verify installation
+podman images | grep ocp-provision-ee
 ```
 
-### 3. Launch Interactive Environment
-```bash
-# From the parent directory
-./ee-bash.sh lab lab
-```
+### **Quick Deployment**
 
-### 4. Run Cluster Installation
 ```bash
-# Complete installation with monitoring
-./030-run-install-and-monitor.sh lab lab
-
-# Or step-by-step installation
+# Deploy a complete OpenShift cluster
+cd ../
 ./010-run-prep-cluster-install.sh lab lab
-./020-run-initialize-cluster.sh lab lab
+./030-run-install-and-monitor.sh lab lab
+./040-run-install-gitops.sh lab lab
 ```
 
-## Project Structure
+## 📁 Project Structure
 
 ```
 automation-ee/
 ├── README.md                           # This file - Main documentation
+├── README-execution-environment-guide.md  # Complete EE guide
 ├── ocp-provision-ee/                   # Main execution environment
 │   ├── README.md                       # EE-specific documentation
 │   ├── builder.sh                      # Automated build script
@@ -91,51 +105,107 @@ automation-ee/
 ├── prep/                               # Prerequisites and setup
 │   ├── README.md                       # Prerequisites documentation
 │   └── install_ansible_tools.sh       # Automated prerequisites installer
-├── README-execution-environment-guide.md  # Complete EE guide (build, mount, run)
 └── ocp-provision-ee.tgz               # Packaged execution environment
 ```
 
-### Directory Descriptions
+## 🐳 Execution Environment
 
-#### **Root Level Files**
-- **`README.md`**: Main documentation for the automation execution environment
-- **`README-ocp-ee.md`**: Guide for integrating OpenShift tools in execution environments
-- **`README-build-ee-w-ocp.md`**: Detailed instructions for building execution environments with OpenShift tools
-- **`README-secrets-mount.md`**: Guide for properly mounting secrets into containers
-- **`ocp-provision-ee.tgz`**: Packaged execution environment for distribution
+### **Base Image**
 
-#### **`ocp-provision-ee/` - Main Execution Environment**
-- **`README.md`**: Detailed documentation for the execution environment
-- **`builder.sh`**: Automated build script with timing and cleanup
-- **`clean-build-env.sh`**: Script to clean build environment and artifacts
-- **`execution-environment.yaml`**: Primary execution environment definition
-- **`execution-environment-customer.yaml`**: Customer-specific configuration
-- **`automation-hub-token.url`**: Red Hat Automation Hub authentication token
-- **`builder.out`**: Build process output and logs
+- **Registry**: `registry.redhat.io/ansible-automation-platform-25/ee-supported-rhel9:latest`
+- **OS**: Red Hat Enterprise Linux 9
+- **Architecture**: x86_64
+- **Size**: ~2.5GB (compressed)
 
-#### **`ocp-provision-ee/files/` - Configuration Files**
-- **`ansible.cfg`**: Default Ansible configuration with optimized settings
-- **`ansible-customer.cfg`**: Customer-specific Ansible configuration
+### **Included Tools**
 
-#### **`ocp-provision-ee/archive/` - Historical Configurations**
-Contains historical versions and alternative configurations:
-- **Execution Environment Definitions**: Various historical EE configurations
-- **Ansible Configurations**: Historical Ansible config files
-- **Requirements Files**: Historical dependency requirements
-- **Build Scripts**: Alternative build approaches and scripts
+| Tool | Version | Purpose |
+|------|---------|---------|
+| **Ansible Core** | 2.15+ | Automation engine |
+| **OpenShift CLI** | 4.15+ | Cluster management |
+| **kubectl** | 1.28+ | Kubernetes management |
+| **Helm** | 3.16.3 | Package management |
+| **Kustomize** | 5.5.0 | Configuration management |
+| **Policy Generator** | 1.15.0 | ACM policy generation |
+| **Python** | 3.11 | Runtime environment |
+| **Git** | 2.39+ | Version control |
 
-#### **`prep/` - Prerequisites and Setup**
-- **`README.md`**: Comprehensive prerequisites documentation
-- **`install_ansible_tools.sh`**: Automated installer for all required tools
+### **Ansible Collections**
 
-### Key Configuration Files
+- **kubernetes.core**: Kubernetes/OpenShift management
+- **community.hashi_vault**: HashiCorp Vault integration
+- **community.general**: General purpose modules
+- **ansible.scm**: Source control management
+- **redhat.openshift**: OpenShift-specific modules
 
-#### **Execution Environment Definition** (`execution-environment.yaml`)
+## ⚙️ Prerequisites
+
+### **System Requirements**
+
+- **CPU**: 4+ cores recommended
+- **Memory**: 8GB+ RAM
+- **Storage**: 20GB+ free space
+- **Network**: Internet access for image pulls
+
+### **Software Dependencies**
+
+```bash
+# Required packages
+sudo dnf install -y podman git ansible-core
+
+# Or with Docker
+sudo dnf install -y docker git ansible-core
+sudo systemctl enable --now docker
+```
+
+### **vSphere Requirements**
+
+- **vCenter**: 7.0+ with appropriate permissions
+- **ESXi**: 7.0+ hosts
+- **Network**: DNS resolution and load balancer
+- **Storage**: Datastore with sufficient capacity
+- **Resource Pool**: CPU and memory allocation
+
+## 🔨 Building the Execution Environment
+
+### **Automated Build**
+
+```bash
+# Build with default configuration
+cd ocp-provision-ee
+./builder.sh
+
+# Build with verbose output
+./builder.sh --verbose
+
+# Clean build (remove existing image)
+./builder.sh --clean
+```
+
+### **Manual Build**
+
+```bash
+# Build using ansible-builder
+ansible-builder build --tag ocp-provision-ee:latest
+
+# Build with custom configuration
+ansible-builder build \
+  --build-arg ANSIBLE_GALAXY_CLI_COLLECTION_OPTS="--upgrade" \
+  --tag ocp-provision-ee:latest
+```
+
+### **Build Configuration**
+
+The execution environment is defined in `execution-environment.yaml`:
+
 ```yaml
 version: 3
 build_arg_defaults:
   ANSIBLE_GALAXY_CLI_COLLECTION_OPTS: '--upgrade'
+
 dependencies:
+  python_interpreter:
+    python_path: /usr/bin/python3.11
   galaxy:
     collections:
       - name: kubernetes.core
@@ -158,329 +228,246 @@ dependencies:
     - gcc [platform:rpm]
 ```
 
-#### **Build Script** (`builder.sh`)
-- Automated build process with timing
-- Base image pulling and caching
-- Context cleanup and optimization
-- Image tagging and versioning
+## 📚 Usage Examples
 
-#### **Prerequisites Installer** (`prep/install_ansible_tools.sh`)
-- System package installation (Python, Podman, Git)
-- Python package management
-- Ansible tools installation
-- PATH configuration
-- Version verification
+### **1. Cluster Installation**
 
-### File Naming Conventions
-
-- **`execution-environment*.yaml`**: Execution environment definitions
-- **`ansible*.cfg`**: Ansible configuration files
-- **`requirements*.yaml`**: Python/Ansible dependency requirements
-- **`build*.sh`**: Build and setup scripts
-- **`install*.sh`**: Installation and setup scripts
-- **`clean*.sh`**: Cleanup and maintenance scripts
-
-## Execution Environment
-
-### Base Image
-- **Registry**: `registry.redhat.io/ansible-automation-platform-25/ee-supported-rhel9:latest`
-- **OS**: Red Hat Enterprise Linux 9
-- **Python**: 3.11
-- **Package Manager**: microdnf
-
-### Included Tools
-
-| Tool | Version | Purpose |
-|------|---------|---------|
-| openshift-install | 4.18.23 | OpenShift cluster installer |
-| oc | 4.18.23 | OpenShift CLI |
-| kubectl | 4.18.23 | Kubernetes CLI |
-| helm | 3.16.3 | Helm package manager |
-| kustomize | 5.5.0 | Configuration management |
-| PolicyGenerator | 1.15.0 | Open Cluster Management |
-| ansible | Latest | Automation engine |
-| ansible-vault | Latest | Secrets management |
-
-### Ansible Collections
-
-- `kubernetes.core` - Kubernetes and OpenShift management
-- `community.hashi_vault` - HashiCorp Vault integration
-- `community.general` - General purpose modules
-- `ansible.scm` - Source control management
-
-### Python Dependencies
-
-- `selinux` - SELinux support
-- `dnspython` - DNS resolution
-- `psutil` - System monitoring
-- `netaddr` - Network address manipulation
-- `openshift` - OpenShift Python client
-- `kubernetes` - Kubernetes Python client
-- `pyyaml` - YAML processing
-- `python-gitlab` - GitLab integration
-
-## Prerequisites
-
-### System Requirements
-- **Operating System**: Linux (RHEL 9+ recommended)
-- **Memory**: Minimum 8GB RAM
-- **Storage**: 20GB+ free disk space
-- **Network**: Access to Red Hat registries and VMware vSphere
-
-### Software Dependencies
-- **Podman**: Container runtime (latest version)
-- **Python 3.11**: Python runtime
-- **Git**: Version control system
-- **ansible-builder**: ≥3.0.0 (installed by prep script)
-- **ansible-navigator**: ≥2.16.0 (installed by prep script)
-
-### VMware vSphere Requirements
-- **vSphere Version**: 7.0+ recommended
-- **Resource Pool**: Sufficient CPU, memory, and storage
-- **Network**: Proper network configuration
-- **Permissions**: Administrative access to vSphere
-
-## Building the Execution Environment
-
-### Automated Build
 ```bash
-cd ocp-provision-ee/
-./builder.sh
-```
+# Prepare cluster environment
+./010-run-prep-cluster-install.sh lab lab
 
-### Manual Build
-```bash
-cd ocp-provision-ee/
-ansible-builder build --verbosity 3 --prune-images --tag ocp-provision-ee:1.0 --tag ocp-provision-ee:latest
-```
-
-### Build Process
-1. **Base Image Pull**: Downloads Red Hat EE base image
-2. **Dependencies**: Installs Python packages and system dependencies
-3. **Collections**: Installs Ansible collections
-4. **Tools**: Downloads and installs OpenShift tools, Helm, Kustomize
-5. **Configuration**: Applies custom configurations
-6. **Validation**: Verifies all tools are working correctly
-
-### Build Output
-- **Image Name**: `ocp-provision-ee:latest`
-- **Image Size**: ~2-3GB (includes all tools)
-- **Registry**: Local Podman registry
-
-## Usage Examples
-
-### Interactive Development Environment
-```bash
-# Launch interactive bash shell
-./ee-bash.sh lab lab
-
-# Inside container, you have access to all tools:
-openshift-install version
-oc version --client
-helm version
-kustomize version
-ansible --version
-```
-
-### Running Ansible Playbooks
-```bash
-# Using ansible-navigator
-ansible-navigator run playbooks/install-cluster.yml \
-  --eei ocp-provision-ee:latest \
-  -m stdout
-
-# Using podman directly
-podman run --rm -it \
-  -v $(pwd):/runner/project:Z \
-  -e KUBECONFIG=/runner/project/clusterconfig/auth/kubeconfig \
-  ocp-provision-ee:latest \
-  ansible-playbook /runner/project/playbooks/install-cluster.yml
-```
-
-### Cluster Installation
-```bash
-# Complete installation
+# Install and monitor cluster
 ./030-run-install-and-monitor.sh lab lab
 
-# Step-by-step installation
-./010-run-prep-cluster-install.sh lab lab
-./020-run-initialize-cluster.sh lab lab
-```
-
-### GitOps Operations
-```bash
 # Install GitOps operator
 ./040-run-install-gitops.sh lab lab
-
-# Using Helm directly
-./ee-bash.sh lab lab
-# Inside container:
-helm install argocd ./charts/argocd
 ```
 
-## Configuration
-
-### Environment-Specific Configurations
-
-The execution environment supports multiple configurations:
-
-- **`execution-environment.yaml`**: Default configuration
-- **`execution-environment-customer.yaml`**: Customer-specific configuration
-
-### Ansible Configuration
-
-Configuration files are included in the `files/` directory:
-
-- **`ansible.cfg`**: Default Ansible configuration
-- **`ansible-customer.cfg`**: Customer-specific settings
-
-### Volume Mounting
-
-For proper file access and security:
+### **2. Using Execution Environment Directly**
 
 ```bash
-# Mount with SELinux context
-podman run -v $(pwd):/runner/project:Z ocp-provision-ee:latest
-
-# Mount specific directories
-podman run \
+# Run Ansible playbook
+podman run --rm -it \
   -v $(pwd)/clusterconfig:/runner/project/clusterconfig:Z \
   -v $(pwd)/playbooks:/runner/project/playbooks:Z \
-  ocp-provision-ee:latest
+  -e KUBECONFIG=/runner/project/clusterconfig/auth/kubeconfig \
+  ocp-provision-ee:latest \
+  ansible-playbook /runner/project/playbooks/openshift-install.yml
+
+# Run OpenShift CLI commands
+podman run --rm -it \
+  -v $(pwd)/clusterconfig:/runner/project/clusterconfig:Z \
+  -e KUBECONFIG=/runner/project/clusterconfig/auth/kubeconfig \
+  ocp-provision-ee:latest \
+  oc get nodes
 ```
 
-## Troubleshooting
+### **3. Helm Operations**
 
-### Common Issues
+```bash
+# Install Helm chart
+podman run --rm -it \
+  -v $(pwd)/charts:/runner/project/charts:Z \
+  ocp-provision-ee:latest \
+  helm install my-app ./charts/my-app
 
-#### Build Failures
+# List Helm releases
+podman run --rm -it \
+  -e KUBECONFIG=/runner/project/clusterconfig/auth/kubeconfig \
+  ocp-provision-ee:latest \
+  helm list
+```
+
+### **4. Kustomize Operations**
+
+```bash
+# Build Kustomize configuration
+podman run --rm -it \
+  -v $(pwd)/kustomize:/runner/project/kustomize:Z \
+  ocp-provision-ee:latest \
+  kustomize build kustomize/overlays/production
+
+# Apply Kustomize configuration
+podman run --rm -it \
+  -v $(pwd)/kustomize:/runner/project/kustomize:Z \
+  -e KUBECONFIG=/runner/project/clusterconfig/auth/kubeconfig \
+  ocp-provision-ee:latest \
+  kustomize build kustomize/overlays/production | oc apply -f -
+```
+
+## ⚙️ Configuration
+
+### **Environment-Specific Configurations**
+
+The execution environment supports multiple configuration profiles:
+
+- **`execution-environment.yaml`**: Default configuration
+- **`execution-environment-customer.yaml`**: Customer-specific settings
+- **`execution-environment-odfl.yaml`**: ODFL-specific configuration
+- **`execution-environment-redhat.yaml`**: Red Hat-specific configuration
+
+### **Ansible Configuration**
+
+Configuration files are located in the `files/` directory:
+
+- **`ansible.cfg`**: Default Ansible configuration
+- **`ansible-customer.cfg`**: Customer-specific Ansible settings
+
+### **Customization**
+
+```bash
+# Create custom configuration
+cp execution-environment.yaml execution-environment-custom.yaml
+
+# Edit configuration
+vim execution-environment-custom.yaml
+
+# Build with custom configuration
+ansible-builder build -f execution-environment-custom.yaml --tag ocp-provision-ee:custom
+```
+
+## 🔄 Day-2 Operations
+
+### **GitOps Integration**
+
+The execution environment includes comprehensive GitOps capabilities:
+
+- **ArgoCD Integration**: Automated application deployment
+- **Advanced Cluster Management**: Multi-cluster management
+- **Policy Management**: Automated policy enforcement
+- **Configuration Drift**: Detection and remediation
+
+### **Monitoring and Validation**
+
+- **Cluster Health**: Automated health checks
+- **Compliance Validation**: Security and policy compliance
+- **Performance Monitoring**: Resource utilization tracking
+- **Alert Management**: Automated alerting and notification
+
+### **Backup and Recovery**
+
+- **Configuration Backup**: Automated backup of cluster configurations
+- **Disaster Recovery**: Automated recovery procedures
+- **Data Protection**: Secure backup and restore capabilities
+
+## 🚨 Troubleshooting
+
+### **Common Issues**
+
+#### **Build Failures**
 ```bash
 # Check build logs
-ansible-builder build --verbosity 3 2>&1 | tee build.log
+cat ocp-provision-ee/builder.out
 
 # Clean and rebuild
-rm -rf context/
-ansible-builder build --prune-images
+./clean-build-env.sh
+./builder.sh --clean
 ```
 
-#### Container Issues
+#### **Container Issues**
 ```bash
-# Check if image exists
+# Check container logs
+podman logs <container-id>
+
+# Verify image exists
 podman images | grep ocp-provision-ee
 
-# Inspect container
-podman run --rm -it ocp-provision-ee:latest /bin/bash
-
-# Check tool versions
-podman run --rm ocp-provision-ee:latest openshift-install version
+# Test container execution
+podman run --rm ocp-provision-ee:latest ansible --version
 ```
 
-#### Permission Issues
+#### **Permission Issues**
 ```bash
-# Check SELinux context
-ls -Z ./clusterconfig/
+# Fix SELinux contexts
+sudo setsebool -P container_manage_cgroup on
 
-# Fix SELinux context
-chcon -Rt svirt_sandbox_file_t ./clusterconfig/
+# Fix file permissions
+chmod +x *.sh
 ```
 
-#### Network Issues
+### **Debug Mode**
+
 ```bash
-# Test registry access
-podman pull registry.redhat.io/ansible-automation-platform-25/ee-supported-rhel9:latest
+# Enable verbose output
+export ANSIBLE_VERBOSITY=4
 
-# Check authentication
-podman login registry.redhat.io
+# Run with debug logging
+podman run --rm -it \
+  -e ANSIBLE_VERBOSITY=4 \
+  ocp-provision-ee:latest \
+  ansible-playbook playbook.yml
 ```
 
-### Debug Commands
+### **Performance Optimization**
 
-#### Container Debugging
 ```bash
-# Interactive debugging
-podman run --rm -it --entrypoint /bin/bash ocp-provision-ee:latest
+# Use parallel execution
+ansible-playbook playbook.yml -f 10
 
-# Check environment
-podman run --rm ocp-provision-ee:latest env | grep -E "(OCP|HELM|KUSTOMIZE)"
-
-# Test tool functionality
-podman run --rm ocp-provision-ee:latest openshift-install version
+# Optimize container resources
+podman run --rm -it \
+  --memory=4g \
+  --cpus=2 \
+  ocp-provision-ee:latest \
+  ansible-playbook playbook.yml
 ```
 
-#### Ansible Debugging
+## 📚 Documentation
+
+### **Complete Guides**
+
+- **`README-execution-environment-guide.md`**: Comprehensive execution environment guide
+- **`ocp-provision-ee/README.md`**: Execution environment specific documentation
+- **`prep/README.md`**: Prerequisites and setup guide
+
+### **Additional Resources**
+
+- **Project Documentation**: `../DOCUMENTATION.md`
+- **User Guide**: `../USER-GUIDE-SUMMARY.md`
+- **Technical Summary**: `../TECHNICAL-SUMMARY.md`
+- **Executive Summary**: `../EXECUTIVE-SUMMARY.md`
+
+### **Quick Reference**
+
+| Command | Purpose |
+|---------|---------|
+| `./builder.sh` | Build execution environment |
+| `./clean-build-env.sh` | Clean build environment |
+| `podman images` | List container images |
+| `ansible-playbook --version` | Check Ansible version |
+| `oc version` | Check OpenShift CLI version |
+
+## 🤝 Contributing
+
+### **Development Workflow**
+
+1. **Fork Repository**: Create a fork of the repository
+2. **Create Branch**: Create a feature branch
+3. **Make Changes**: Implement your changes
+4. **Test Changes**: Run tests and validation
+5. **Submit PR**: Create a pull request
+
+### **Code Standards**
+
+- **Documentation**: Update README files for new features
+- **Testing**: Include tests for new functionality
+- **Versioning**: Follow semantic versioning
+- **Security**: Follow security best practices
+
+### **Testing**
+
 ```bash
-# Verbose Ansible output
-ansible-playbook --check -vvv playbook.yml
+# Run validation tests
+ansible-playbook tests/validate-execution-environment.yml
 
-# Test connectivity
-ansible all -m ping -i inventory
-
-# Validate configuration
-ansible-inventory -i inventory --list
+# Test container functionality
+podman run --rm ocp-provision-ee:latest ansible-playbook tests/test-playbook.yml
 ```
 
-## Documentation
+## 📄 License
 
-### Additional Documentation
-
-- **[ocp-provision-ee/README.md](./ocp-provision-ee/README.md)**: Execution environment specific documentation
-- **[prep/README.md](./prep/README.md)**: Prerequisites and setup guide
-- **[README-execution-environment-guide.md](./README-execution-environment-guide.md)**: Complete execution environment guide (build, mount, run)
-
-### Related Documentation
-
-- **[Parent Project README](../README.md)**: Main project documentation
-- **[Installation Scripts](../README.md#installation-scripts)**: Installation script documentation
-- **[Day-2 Operations](../README.md#day-2-operations)**: Post-installation operations
-
-## Contributing
-
-### Development Workflow
-
-1. **Fork the repository**
-2. **Create a feature branch**
-3. **Make changes with proper documentation**
-4. **Test changes thoroughly**
-5. **Submit a pull request**
-
-### Code Standards
-
-- **Shell Scripts**: Follow bash best practices with proper error handling
-- **Ansible**: Use consistent variable naming and role structure
-- **Documentation**: Update README files for any new features
-- **Testing**: Add tests for new functionality
-
-### Testing Requirements
-
-- **Execution Environment**: Test with built execution environment
-- **Multiple Configurations**: Test with different environment configs
-- **Error Handling**: Verify proper error messages and recovery
-- **Documentation**: Ensure all new features are documented
-
-### Security Considerations
-
-- **Secrets Management**: Never commit unencrypted secrets
-- **Certificate Handling**: Use Ansible Vault for all certificates
-- **Access Control**: Follow principle of least privilege
-- **Audit Trail**: Maintain logs for all operations
+This project is part of the ODFL OpenShift vSphere IPI Installation automation framework.
 
 ---
 
-## Support and Resources
-
-### Official Documentation
-- [OpenShift Documentation](https://docs.openshift.com/)
-- [Ansible Documentation](https://docs.ansible.com/)
-- [Ansible Builder Documentation](https://ansible.readthedocs.io/projects/builder/)
-- [VMware vSphere Documentation](https://docs.vmware.com/en/VMware-vSphere/)
-
-### Community Resources
-- [OpenShift Community](https://github.com/openshift)
-- [Ansible Galaxy](https://galaxy.ansible.com/)
-- [Red Hat Developer](https://developers.redhat.com/)
-
-### Project Maintenance
-- **Maintainer**: ODFL Platform Team
-- **Last Updated**: December 2024
-- **Version**: 1.0.0
-- **License**: Internal Use Only
+**Note**: This execution environment is designed for production use and includes comprehensive security, monitoring, and troubleshooting capabilities. Always test changes in a development environment before deploying to production.
