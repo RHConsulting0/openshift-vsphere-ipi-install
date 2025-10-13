@@ -4,16 +4,19 @@ This directory contains a comprehensive test environment for OpenShift Container
 
 ## 📋 Table of Contents
 
-- [Overview](#overview)
-- [Directory Structure](#directory-structure)
-- [Test Script](#test-script)
-- [Install Directory](#install-directory)
-- [Prerequisites](#prerequisites)
-- [Usage Examples](#usage-examples)
-- [Configuration Files](#configuration-files)
-- [Troubleshooting](#troubleshooting)
-- [Best Practices](#best-practices)
-- [References](#references)
+- [Overview](#-overview)
+- [Directory Structure](#-directory-structure)
+- [Test Script](#-test-script)
+- [Install Directory](#-install-directory)
+- [Prerequisites](#-prerequisites)
+- [Usage Examples](#-usage-examples)
+- [Configuration Files](#️-configuration-files)
+- [Troubleshooting](#-troubleshooting)
+- [Output and Logging](#-output-and-logging)
+- [Security Considerations](#-security-considerations)
+- [Best Practices](#-best-practices)
+- [Related Scripts](#-related-scripts)
+- [References](#-references)
 
 ## 🎯 Overview
 
@@ -419,12 +422,16 @@ oc apply --dry-run=client -f install-dir/manifests/
 
 ## 📚 References
 
-- [OpenShift Documentation: Creating a Cluster](https://docs.openshift.com/container-platform/latest/installing/index.html)
-- [OpenShift Installer GitHub](https://github.com/openshift/installer)
-- [Ansible Execution Environments](https://docs.ansible.com/automation-controller/latest/html/userguide/execution_environments.html)
+- [OpenShift Documentation: Installing Clusters](https://docs.openshift.com/container-platform/latest/installing/index.html)
+- [OpenShift Installer GitHub Repository](https://github.com/openshift/installer)
+- [Ansible Execution Environments Documentation](https://docs.ansible.com/automation-controller/latest/html/userguide/execution_environments.html)
 - [Podman Documentation](https://docs.podman.io/)
 - [Cluster API Documentation](https://cluster-api.sigs.k8s.io/)
 - [vSphere Cloud Provider](https://github.com/kubernetes/cloud-provider-vsphere)
+- [OpenShift Container Platform Documentation](https://docs.openshift.com/container-platform/)
+- [Kubernetes Documentation](https://kubernetes.io/docs/)
+- [YAML Lint Documentation](https://yamllint.readthedocs.io/)
+- [Kubeval Documentation](https://www.kubeval.com/)
 
 ---
 
