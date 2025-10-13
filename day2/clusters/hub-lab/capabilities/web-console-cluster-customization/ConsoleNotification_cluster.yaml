@@ -1,0 +1,12 @@
+---
+apiVersion: console.openshift.io/v1
+kind: ConsoleNotification
+metadata:
+  name: cluster
+spec:
+  text: "cluster: labhub"
+  location: BannerTop
+
+  # NOTE: color blind safe colors from https://personal.sron.nl/~pault/#sec:sequential
+  color: '#000000'
+  backgroundColor: '#888888'

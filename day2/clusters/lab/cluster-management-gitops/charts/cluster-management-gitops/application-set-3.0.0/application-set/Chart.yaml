@@ -1,0 +1,5 @@
+apiVersion: v2
+description: Templated creation of ApplicationSets
+name: application-set
+type: application
+version: 3.0.0

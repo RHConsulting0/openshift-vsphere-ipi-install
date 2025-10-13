@@ -1,0 +1,29 @@
+---
+# name of the ArgoCD CR that will manage namespaces created by Applications
+# created by the ApplicationSet created by this helm chart
+applicationSetManagedByArgoCDNamespace: 
+
+applicationSetDefaults:
+  componentLabel: 
+  partOfLabel: 
+
+  # ArgoCD Project to put the generated ArgoCD Applications in
+  argoCDProject: 
+
+  # Automatically sync the generated ArgoCD Applications
+  syncPolicyAutomated: true
+
+  # if true:
+  #   sets spec.synPolicy.applicationsSync to 'create-update'
+  #   sets spec.syncPolicy.preserveResourcesOnDeletion to 'true'
+  # if false:
+  #   sets spec.synPolicy.applicationsSync to 'sync'
+  #   sets spec.syncPolicy.preserveResourcesOnDeletion to 'false'
+  preventCascadingDeletion: false
+
+applicationSetGitSources: []
+#- name: # required
+#  repoURL: # required
+#  revision: # required
+#  path: # required
+  #  override any of the applicationSetDefaults

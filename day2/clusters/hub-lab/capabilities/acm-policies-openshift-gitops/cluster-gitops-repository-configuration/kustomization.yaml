@@ -1,0 +1,32 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+commonAnnotations:
+  # important that gitops repo config get applied before the policies since the policies need the gitops repo config to be in place to properly run
+  argocd.argoproj.io/sync-wave: "-10"
+
+resources:
+- https://github.com/RHConsulting0/openshift-vsphere-ipi-install.git//day2/capabilities/kustomize/bases/cluster-gitops-repository-configuration?ref=automation
+
+patches:
+# make managed cluster gitops config unique on RHACM cluster
+# NOTE: since no way to rename the 'local-cluster' as far as ACM is concerned need to name this ConfigMap so that ACM Policy can pick it up based on a hub template {{hub .ManagedClusterName hub}}
+- target:
+    name: cluster-gitops-repo-config
+  patch: |-
+    - op: replace
+      path: /metadata/name
+      value: local-cluster-gitops-repo-config
+- target:
+    name: cluster-gitops-repo-config
+  patch: |-
+    - op: replace
+      path: /data/gitopsRepository
+      value: https://github.com/RHConsulting0/openshift-vsphere-ipi-install.git
+- target:
+    name: cluster-gitops-repo-config
+  patch: |-
+    - op: replace
+      path: /data/gitopsRevision
+      value: main

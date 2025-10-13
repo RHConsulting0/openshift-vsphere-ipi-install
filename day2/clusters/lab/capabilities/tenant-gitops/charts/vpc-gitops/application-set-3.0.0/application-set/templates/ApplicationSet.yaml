@@ -1,0 +1,67 @@
+# NOTE on escaping:
+#  first level of brackets is for the helm template at build time and
+#  second level `brackets` is for the ArogCD templating at runtime
+
+# NOTE on looping:
+#   Could loop the applicationSetGitSources at the generators level rather then ApplicationSet level
+#   But for clarity in ArgoCD rendering nice to have a separate ApplicationSet per source
+
+{{- range $.Values.applicationSetGitSources }}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: {{ .name }}
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  syncPolicy:
+    preserveResourcesOnDeletion: {{ .preventCascadingDeletion | default $.Values.applicationSetDefaults.preventCascadingDeletion }}
+    applicationsSync: {{ .preventCascadingDeletion | default $.Values.applicationSetDefaults.preventCascadingDeletion | ternary "create-update" "sync" }}
+  generators:
+  - git:
+      repoURL: {{ .repoURL }}
+      revision: {{ .revision }}
+      files:
+      - path: {{ .path }}
+      values:
+        repoURL: {{ .repoURL }}
+        revision: {{ .revision }}
+  template:
+    metadata:
+      name: '{{ `{{ .path.basenameNormalized }}` }}'
+      labels:
+        app.kubernetes.io/name: '{{ `{{ .path.basenameNormalized }}` }}'
+        app.kubernetes.io/component: '{{ .componentLabel | default $.Values.applicationSetDefaults.componentLabel }}'
+        app.kubernetes.io/part-of: '{{ .partOfLabel | default $.Values.applicationSetDefaults.partOfLabel }}'
+    spec:
+      project: {{ .argoCDProject | default $.Values.applicationSetDefaults.argoCDProject }}
+      source:
+        repoURL: '{{ `{{ .values.repoURL }}` }}'
+        targetRevision: '{{ `{{ .values.revision }}` }}'
+        path: '{{ `{{ .path.path }}` }}'
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: '{{ `{{ dig "namespace" "" . }}` }}' # ensure Argo gets namespace admin on created namespace
+      syncPolicy:
+        {{- if .syncPolicyAutomated | default $.Values.applicationSetDefaults.syncPolicyAutomated }}
+        automated:
+          selfHeal: true
+          prune: true
+        {{- end }}
+
+        # since there are inter-dependencies between applications that can take a while to sort themselves out allow for infinite retries
+        retry:
+          limit: -1
+          backoff:
+            duration: 10s
+            factor: 2
+            maxDuration: 10m
+
+        # ensure Argo gets namespace admin on created namespace
+        syncOptions:
+        - CreateNamespace=true
+        managedNamespaceMetadata:
+          labels:
+            argocd.argoproj.io/managed-by: {{ $.Values.applicationSetManagedByArgoCDNamespace }}
+{{- end }}

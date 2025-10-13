@@ -1,0 +1,7 @@
+apiVersion: v2
+name: vpc-gitops
+description: Defines the creation of VPC gitops
+
+type: application
+
+version: 1.1.8
