@@ -1,0 +1,28 @@
+---
+applicationSetManagedByArgoCDNamespace: openshift-gitops
+
+applicationSetDefaults:
+  componentLabel: cluster-management
+  partOfLabel: platform-management
+  argoCDProject: cluster-management
+  syncPolicyAutomated: true
+  preventCascadingDeletion: false
+
+applicationSetGitSources:
+# cluster specific capabilities
+- name: cluster-lab
+  repoURL: https://github.com/RHConsulting0/openshift-vsphere-ipi-install.git
+  revision: automation
+  path: clusters/lab/capabilities/**/kustomization.yaml
+
+# group-all capabilities
+- name: group-all
+  repoURL: https://github.com/RHConsulting0/openshift-vsphere-ipi-install.git
+  revision: automation
+  path: cluster-groups/kustomize/groups/all/capabilities/**/kustomization.yaml
+
+# group-test capabilities
+- name: group-test
+  repoURL: https://github.com/RHConsulting0/openshift-vsphere-ipi-install.git
+  revision: automation
+  path: cluster-groups/kustomize/groups/test/capabilities/**/kustomization.yaml

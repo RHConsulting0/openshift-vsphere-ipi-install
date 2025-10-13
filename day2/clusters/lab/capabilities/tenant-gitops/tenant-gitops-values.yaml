@@ -12,6 +12,6 @@ applicationSetDefaults:
 applicationSetGitSources:
   tenants:
     name: tenants
-    repoURL: https://gitlab.consulting.redhat.com/platform-management-gitops/platform-tenants.git
-    revision: main
-    path: clusters/workload1/*/kustomization.yaml
+    repoURL: https://github.com/RHConsulting0/openshift-vsphere-ipi-install.git
+    revision: automation
+    path: clusters/lab/*/kustomization.yaml
