@@ -7,12 +7,16 @@
 # Usage function
 usage() {
     cat << EOF
-Usage: $0 [OPTIONS]
+Usage: $0 <cluster> <env> [OPTIONS]
 
 DESCRIPTION:
     Launch an Ansible Execution Environment (EE) container for OpenShift cluster provisioning.
     Provides an interactive bash shell with all necessary tools for OpenShift installation.
     This script launches a containerized environment with all required tools pre-installed.
+
+PARAMETERS:
+    cluster    Cluster identifier/name (e.g., lab, prod, dev)
+    env        Environment identifier (e.g., lab, prod, dev)
 
 CONTAINER FEATURES:
     - OpenShift installer tools (openshift-install, oc, kubectl)
@@ -34,8 +38,10 @@ PREREQUISITES:
     - Run './automation-ee/ocp-provision-ee/builder.sh' to build the EE image
 
 EXAMPLES:
-    $0                    # Launch EE container
-    $0 --help            # Show this help message
+    $0 lab lab              # Launch EE container for lab cluster in lab environment
+    $0 prod prod            # Launch EE container for prod cluster in prod environment
+    $0 dev dev              # Launch EE container for dev cluster in dev environment
+    $0 --help               # Show this help message
 
 OPTIONS:
     -h, --help    Show this help message
@@ -47,6 +53,26 @@ EOF
 if [[ "$1" == "-h" || "$1" == "--help" ]]; then
     usage
     exit 0
+fi
+
+# Check for required parameters
+if [[ $# -lt 2 ]]; then
+    echo "ERROR: Missing required parameters"
+    echo ""
+    usage
+    exit 1
+fi
+
+# Store parameters
+CLUSTER="$1"
+ENV="$2"
+
+# Validate parameters (basic validation)
+if [[ -z "$CLUSTER" || -z "$ENV" ]]; then
+    echo "ERROR: Both cluster and environment parameters are required"
+    echo ""
+    usage
+    exit 1
 fi
 
 # Container execution environment
@@ -87,6 +113,8 @@ echo "Ansible Execution Environment Launcher"
 echo "=========================================="
 echo "Execution Container: $EXECUTION_CONTAINER"
 echo "Project Directory: $PROJECT_DIR"
+echo "Cluster: $CLUSTER"
+echo "Environment: $ENV"
 echo "=========================================="
 echo ""
 
@@ -96,8 +124,11 @@ podman run --rm -it \
   --ipc=host \
   --user=root \
   --group-add=root \
+  -e CLUSTER="$CLUSTER" \
+  -e ENV="$ENV" \
   -v "$PROJECT_DIR/$ANSIBLE_DIR:/runner/project:Z" \
   -v "$PROJECT_DIR/all-clusters-resources:/runner/all-clusters-resources:Z" \
+  -v "$PROJECT_DIR/day2:/runner/day2:Z" \
   "$EXECUTION_CONTAINER"
 
 
