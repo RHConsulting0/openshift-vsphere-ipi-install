@@ -57,7 +57,7 @@ platform_vsphere:
 
 
 install_config:
-  cluster_name: cluster-9gzgf
+  cluster_name: cluster-gccr6
   ocp_install_ver: 4.18.23
   base_domain: dynamic.redhatworkshops.io
   # Change IP's per customer

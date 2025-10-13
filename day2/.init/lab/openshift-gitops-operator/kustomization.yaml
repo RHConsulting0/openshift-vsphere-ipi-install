@@ -1,0 +1,6 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+-  https://github.com/RHConsulting0/openshift-vsphere-ipi-install.git//day2/capabilities/kustomize/bases/openshift-gitops-operator?ref=automation
+
