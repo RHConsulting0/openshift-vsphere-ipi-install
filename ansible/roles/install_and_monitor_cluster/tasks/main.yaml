@@ -51,7 +51,6 @@
 
 # Task commented to implement async install with monitoring and verification
 # DEPRECATED - use async install with monitoring and verification below
-
 # - name: Initialize IPI Cluster installation
 #   ansible.builtin.command: >-
 #     /usr/local/bin/openshift-install create cluster

@@ -11,6 +11,14 @@ secrets_yaml_file: "/runner/project/secrets/lab/secrets.yaml"
 vault_password_file: "/runner/all-clusters-resources/vault-password.txt"   # adjust as needed
 secrets: "{{ lookup ('file', secrets_yaml_file) | from_yaml }}"
 
+# Cluster management
+managing_cluster:
+  foundation_cluster: labhub
+
+# Vault management
+vault_service:
+  use_vault: false
+
 # OpenShift install config settings
 
 # ODFL environment
@@ -28,7 +36,7 @@ platform_vsphere:
     - "10.0.0.0"
   ingress_vips:
     - "10.0.0.1"
-  failure_domain:
+  failure_domains:
     name: "generated-failure-domain"
     region: "generated-region"  
     server: "dc1-p-a-vcenter1.corp.yyzz.com"
