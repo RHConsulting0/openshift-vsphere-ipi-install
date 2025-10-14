@@ -23,7 +23,25 @@ helmCharts:
 patches:
 - target:
     group: operators.coreos.com
-    version: v1alpha1
+    version: v1beta1
     kind: Subscription
     name: openshift-gitops-operator
   path: Subscription-patch_openshift-gitops-operator.yaml
+- target:
+    group: ""
+    version: v1
+    kind: Namespace
+    name: openshift-gitops-operator
+  path: Namespace-patch_sync-wave.yaml
+- target:
+    group: operators.coreos.com
+    version: v1
+    kind: OperatorGroup
+    name: openshift-gitops-operator
+  path: OperatorGroup-patch_sync-wave.yaml
+- target:
+    group: operators.coreos.com
+    version: v1beta1
+    kind: Subscription
+    name: openshift-gitops-operator
+  path: Subscription-patch_sync-wave.yaml

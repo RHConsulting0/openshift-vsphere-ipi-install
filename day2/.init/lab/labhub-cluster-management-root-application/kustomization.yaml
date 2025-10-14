@@ -12,18 +12,18 @@ labels:
 resources:
 # deploy customer cluster name
 # NOTE: after init this is enforced via the clusters/labhub application
-- ../../../../clusters/lab/capabilities/custom-cluster-name
+- ../../../clusters/labhub/capabilities/custom-cluster-name
 
 # deploy cluster repo configuration
-- ../../../../clusters/lab/capabilities/acm-policies-openshift-gitops/cluster-gitops-repository-configuration
+- ../../../clusters/labhub/capabilities/acm-policies-openshift-gitops/cluster-gitops-repository-configuration
 
 # initial configuration of cluster gitops (aka, configure OpenShift GitOps (ArgoCD) for cluster management)
 # NOTE: after init this is enforced by governance component
-- https://github.com/RHConsulting0/openshift-vsphere-ipi-install.git//kustomize/bases/acm-policies-openshift-gitops/policy-manifests/cluster-management/configure-cluster-gitops?ref=automation
+- https://github.com/RHConsulting0/openshift-vsphere-ipi-install.git//day2/capabilities/kustomize/bases/acm-policies-openshift-gitops/policy-manifests/cluster-management/configure-cluster-gitops?ref=automation
 
 # initial deployment of governance policy content for TODO
 # NOTE: after init this is enforced by governance component
-- https://github.com/RHConsulting0/openshift-vsphere-ipi-install.git//kustomize/bases/acm-policies-openshift-gitops/policy-manifests/cluster-management/deploy-cluster-management-applications?ref=automation
+- https://github.com/RHConsulting0/openshift-vsphere-ipi-install.git//day2/capabilities/kustomize/bases/acm-policies-openshift-gitops/policy-manifests/cluster-management/deploy-cluster-management-applications?ref=automation
 
 # Update Application deployed by TODO to use the gitops configuration supplied by the labhub cluster-gitops-repository-configuration overlay
 # NOTE: after init this is done by dynamic replacement by the deploy-cluster-management-applications policy

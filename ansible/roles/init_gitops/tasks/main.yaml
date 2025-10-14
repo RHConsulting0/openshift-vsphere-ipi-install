@@ -9,11 +9,12 @@
   kubernetes.core.k8s:
     definition: "{{ lookup('kubernetes.core.kustomize', dir='day2/.init/' + managing_cluster.foundation_cluster + '/openshift-gitops-operator', enable_helm=True) }}"
     wait: true
-  register: installOpenShiftGitopsOperatorResult
+    wait_timeout: 600
+  register: install_openshift_gitops_operator_result
 
 - name: Install OpenShift GitOps operator result output (enable -v to see)
   ansible.builtin.debug:
-    var: installOpenShiftGitopsOperatorResult
+    var: install_openshift_gitops_operator_result
     verbosity: 1
 
 - name: Wait for CRD established | ArgoCD
@@ -25,7 +26,7 @@
     wait_timeout: 300
     wait_condition:
       type: Established
-      status: True
+      status: true
       reason: InitialNamesAccepted
 
 - name: Wait for CRD established | Application
@@ -37,7 +38,7 @@
     wait_timeout: 300
     wait_condition:
       type: Established
-      status: True
+      status: true
       reason: InitialNamesAccepted
 
 - name: Wait for Namespace | openshift-gitops
@@ -52,11 +53,11 @@
   kubernetes.core.k8s:
     definition: "{{ lookup('kubernetes.core.kustomize', dir='day2/.init/' + managing_cluster.foundation_cluster + '/openshift-gitops', enable_helm=True) }}"
     wait: true
-  register: configureClusterOpenShiftGitops
+  register: configure_cluster_openshift_gitops
 
 - name: Configure cluster OpenShift GitOps (ArgoCD) result output (enable -v to see)
   ansible.builtin.debug:
-    var: configureClusterOpenShiftGitops
+    var: configure_cluster_openshift_gitops
     verbosity: 1
 
 - name: Wait for ArgoCD AppProjects
@@ -66,7 +67,7 @@
     name: "{{ appproject }}"
     namespace: openshift-gitops
     wait: true
-    wait_timeout: 300
+    wait_timeout: 180                # Initially 300
   loop:
     - cluster-management
     - tenant-management
@@ -75,13 +76,20 @@
 
 - name: Install Application to initialize gitops reconciliation loop
   kubernetes.core.k8s:
-    definition: "{{ lookup('kubernetes.core.kustomize', dir='day2/.init/' + managing_cluster.foundation_cluster + '/foundation-cluster-management-root-application', enable_helm=True) }}"
+    definition: >-
+      {{
+        lookup(
+          'kubernetes.core.kustomize',
+          dir='day2/.init/' + managing_cluster.foundation_cluster + '/labhub-cluster-management-root-application',
+          enable_helm=True
+        )
+      }}
     wait: true
-  register: installApplicationResult
+  register: install_application_result
 
 - name: Install Application result output (enable -v to see)
   ansible.builtin.debug:
-    var: installApplicationResult
+    var: install_application_result
     verbosity: 1
 
 - name: Wait for ArgoCD Applications in openshift-gitops to be healthy and synced (10 second delay between attempts, time out at 20 minutes)

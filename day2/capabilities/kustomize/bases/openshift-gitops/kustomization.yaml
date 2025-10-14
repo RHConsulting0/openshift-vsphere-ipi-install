@@ -12,7 +12,7 @@ labels:
     app.kubernetes.io/part-of: platform-management
 
 resources:
-- ArcoCD_openshift-gitops.yaml
+- ArgoCD_openshift-gitops.yaml
 - AppProject_cluster-management.yaml
 - AppProject_default.yaml
 - ClusterRoleBinding_openshift-gitops-acm-cluster-admin.yaml

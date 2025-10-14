@@ -4,8 +4,5 @@ kind: Subscription
 metadata:
   name: openshift-gitops-operator
   namespace: openshift-gitops-operator
-spec:
-  config:
-    env:
-    - name: ARGOCD_CLUSTER_CONFIG_NAMESPACES
-      value: openshift-gitops, tenant-gitops
+  annotations:
+    argocd.argoproj.io/sync-wave: "-40"

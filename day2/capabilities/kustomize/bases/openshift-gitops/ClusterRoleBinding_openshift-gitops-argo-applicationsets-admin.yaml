@@ -10,4 +10,4 @@ subjects:
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: applicationsets.argoproj.io-v1alpha1-admin
+  name: applicationsets.argoproj.io-v1beta1-admin

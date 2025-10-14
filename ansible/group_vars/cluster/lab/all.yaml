@@ -126,7 +126,6 @@ ocp_install:
     kubeconfig_backup_path: "{{ playbook_dir }}/kubeconfig-backup"
     openshift_install_binary: "/usr/local/bin/openshift-install"
 
-
 # GitOps / Argo CD settings
 gitops:
   repo_url: ""
@@ -157,7 +156,6 @@ destroy_cluster:
   keep_config_files: false
   destroy_timeout: 1800  # 30 minutes
   cleanup_timeout: 600   # 10 minutes
-
 
 
 
