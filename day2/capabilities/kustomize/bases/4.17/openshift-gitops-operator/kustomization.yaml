@@ -1,0 +1,55 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: openshift-gitops-operator
+
+labels:
+- includeSelectors: false
+  pairs:
+    app.kubernetes.io/name: openshift-gitops-operator
+    app.kubernetes.io/component: cluster-management
+    app.kubernetes.io/part-of: platform-management
+
+# NOTE: setting chart home as a workaround for https://github.com/argoproj/argo-cd/issues/8008
+helmGlobals:
+  chartHome: charts/openshift-gitops-operator
+# COMMENT: Using newer helm chart  
+# helmCharts:
+# - name: operators-installer
+#   repo: https://redhat-cop.github.io/helm-charts
+#   version: 3.0.1
+#   valuesFile: values.yaml
+helmCharts:
+- name: operators-installer
+  repo: https://redhat-cop.github.io/helm-charts
+  version: 3.2.4
+  valuesFile: values.yaml
+
+
+
+patches:
+- target:
+    group: operators.coreos.com
+    version: v1beta1
+    kind: Subscription
+    name: openshift-gitops-operator
+  path: Subscription-patch_openshift-gitops-operator.yaml
+- target:
+    group: ""
+    version: v1
+    kind: Namespace
+    name: openshift-gitops-operator
+  path: Namespace-patch_sync-wave.yaml
+- target:
+    group: operators.coreos.com
+    version: v1
+    kind: OperatorGroup
+    name: openshift-gitops-operator
+  path: OperatorGroup-patch_sync-wave.yaml
+- target:
+    group: operators.coreos.com
+    version: v1beta1
+    kind: Subscription
+    name: openshift-gitops-operator
+  path: Subscription-patch_sync-wave.yaml
