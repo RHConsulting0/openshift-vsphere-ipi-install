@@ -118,7 +118,7 @@ openshift_install:
 ocp_install:
   log_level: debug          #  (e.g. "debug | info | warn | error") (default "info")
   monitor:
-    max_wait_time: 60   # in minutes
+    max_wait_time: 3600   # in seconds (60 minutes)
     check_interval: 60  # in seconds
     api_timeout: 300    # in seconds (5m)
   verify:
