@@ -1,0 +1,9 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# NOTE: need to re-specify here, rather then inheriting from base, so ArgoCD ApplicationSet can read it so in Application template can specify the namespace and create it so that argo can give itself namespace admin
+namespace: openshift-authentication
+
+resources:
+- https://github.com/RHConsulting0/openshift-vsphere-ipi-install.git//day2/capabilities/kustomize/bases/identity-configuration?ref=automation

@@ -1,9 +1,0 @@
----
-kind: Secret
-apiVersion: v1
-metadata:
-  name: vault-token-infra
-  namespace: external-secrets-operator
-data:
-  token: {{ vault_read_token | b64encode }}
-type: Opaque

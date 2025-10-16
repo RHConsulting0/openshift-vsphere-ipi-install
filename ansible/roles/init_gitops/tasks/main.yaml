@@ -49,11 +49,14 @@
     wait: true
     wait_timeout: 300
 
+# install ACM/MCH ??
 - name: Configure cluster OpenShift GitOps (ArgoCD)
   kubernetes.core.k8s:
     definition: "{{ lookup('kubernetes.core.kustomize', dir='day2/.init/' + managing_cluster.foundation_cluster + '/openshift-gitops', enable_helm=True) }}"
     wait: true
   register: configure_cluster_openshift_gitops
+
+#ACM and MCH should be installed!!!!
 
 - name: Configure cluster OpenShift GitOps (ArgoCD) result output (enable -v to see)
   ansible.builtin.debug:
@@ -74,16 +77,11 @@
   loop_control:
     loop_var: appproject
 
+# ADD WAIT for ACM
+
 - name: Install Application to initialize gitops reconciliation loop
   kubernetes.core.k8s:
-    definition: >-
-      {{
-        lookup(
-          'kubernetes.core.kustomize',
-          dir='day2/.init/' + managing_cluster.foundation_cluster + '/labhub-cluster-management-root-application',
-          enable_helm=True
-        )
-      }}
+    definition: "{{ lookup('kubernetes.core.kustomize', dir='day2/.init/' + managing_cluster.foundation_cluster + '/foundation-cluster-management-root-application', enable_helm=True) }}"
     wait: true
   register: install_application_result
 

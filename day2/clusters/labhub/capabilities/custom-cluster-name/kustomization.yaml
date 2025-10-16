@@ -10,4 +10,5 @@ labels:
     app.kubernetes.io/part-of: platform-management
 
 resources:
-- ClusterClaim_custom-cluster-name.yaml
+
+- ClusterClaim_custom-cluster-name.yaml  # OCM API not available?

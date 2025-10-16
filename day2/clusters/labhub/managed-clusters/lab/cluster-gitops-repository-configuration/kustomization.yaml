@@ -11,7 +11,7 @@ kind: Kustomization
 namespace: acm-policies-openshift-gitops
 
 resources:
-- ../../../../../../capabilities/kustomize/bases/cluster-gitops-repository-configuration
+- ../../../../../capabilities/kustomize/bases/cluster-gitops-repository-configuration
 
 patches:
 # make managed cluster gitops config unique on RHACM cluster
@@ -20,7 +20,7 @@ patches:
   patch: |-
     - op: replace
       path: /metadata/name
-      value: labhub-gitops-repo-config
+      value: lab-gitops-repo-config
 - target:
     name: cluster-gitops-repo-config
   patch: |-

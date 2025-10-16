@@ -11,4 +11,5 @@ rules:
   resources:
   - appprojects
   - applications
+  - applicationsets
   - argocds

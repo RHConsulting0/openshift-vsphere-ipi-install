@@ -26,7 +26,7 @@ spec:
     # NOTE: can't always rely on "name" cluster claim because cluster ACM is running on is hard coded to `local-cluster` which causes problem when managing multiple ACMs.
     #       this can be simplified when https://issues.redhat.com/browse/ACM-1290 is resolved
     # NOTE: need to use lookup rather then `fromClusterClaim` for 'custom-cluster-name' so it wont fail if it doesn't exist like fromClusterClaim will
-    path: 'clusters/{{ (default (fromClusterClaim "name") (lookup "cluster.open-cluster-management.io/v1beta1" "ClusterClaim" "" "custom-cluster-name").spec.value) }}'
+    path: 'clusters/{{ (default (fromClusterClaim "name") (lookup "cluster.open-cluster-management.io/v1alpha1" "ClusterClaim" "" "custom-cluster-name").spec.value) }}'
 
   destination:
     server: https://kubernetes.default.svc

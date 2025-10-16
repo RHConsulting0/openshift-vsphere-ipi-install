@@ -19,10 +19,10 @@ applicationSetGitSources:
 - name: group-all
   repoURL: https://github.com/RHConsulting0/openshift-vsphere-ipi-install.git
   revision: automation
-  path: cluster-groups/kustomize/groups/all/capabilities/**/kustomization.yaml
+  path: groups/kustomize/groups/all/capabilities/**/kustomization.yaml
 
 # group-test capabilities
 - name: group-test
   repoURL: https://github.com/RHConsulting0/openshift-vsphere-ipi-install.git
   revision: automation
-  path: cluster-groups/kustomize/groups/test/capabilities/**/kustomization.yaml
+  path: groups/kustomize/groups/test/capabilities/**/kustomization.yaml

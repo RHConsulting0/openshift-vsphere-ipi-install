@@ -42,7 +42,7 @@ tests/
 **Test Coverage:**
 - All `kustomization.yaml` files
 - Base configurations in `capabilities/kustomize/bases/`
-- Group configurations in `cluster-groups/kustomize/groups/`
+- Group configurations in `groups/kustomize/groups/`
 - Cluster configurations in `clusters/`
 - Tenant configurations in `tenants/`
 
@@ -142,7 +142,7 @@ ansible-playbook test-all-kustomization-builds-playbook.yaml --tags resources
 kustomize build capabilities/kustomize/bases/openshift-gitops/
 
 # Test cluster groups only
-kustomize build cluster-groups/kustomize/groups/hub-lab/
+kustomize build groups/kustomize/groups/hub-lab/
 
 # Test clusters only
 kustomize build clusters/hub-lab/

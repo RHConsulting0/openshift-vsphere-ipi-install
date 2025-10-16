@@ -34,7 +34,7 @@ The Day2 Operations directory implements a comprehensive GitOps-based platform m
 graph TB
     subgraph "GitOps Repository"
         A[day2/] --> B[capabilities/]
-        A --> C[cluster-groups/]
+        A --> C[groups/]
         A --> D[clusters/]
         A --> E[tenants/]
         A --> F[tests/]
@@ -92,7 +92,7 @@ day2/
 │   │       └── openshift-gitops-operator/       # GitOps operator
 │   └── tests/                         # Capability validation tests
 │       └── test-all-kustomization-builds-playbook.yaml
-├── cluster-groups/                     # Logical cluster groupings
+├── groups/                     # Logical cluster groupings
 │   ├── README.md                      # Cluster groups documentation
 │   ├── kustomize/                     # Kustomize group configurations
 │   │   └── groups/
@@ -143,7 +143,7 @@ Reusable components that can be deployed across multiple clusters:
   - Kubelet tuning and node maintenance
   - OpenShift GitOps operator
 
-### 2. Cluster Groups (`cluster-groups/`)
+### 2. Cluster Groups (`groups/`)
 
 Logical groupings of clusters with shared capabilities:
 
@@ -356,7 +356,7 @@ oc patch application cluster-management-gitops -n openshift-gitops --type merge 
 ## 📚 Additional Documentation
 
 - [Capabilities Documentation](capabilities/README.md)
-- [Cluster Groups Documentation](cluster-groups/README.md)
+- [Cluster Groups Documentation](groups/README.md)
 - [Clusters Documentation](clusters/README.md)
 - [Tenants Documentation](tenants/README.md)
 - [Testing Documentation](tests/README.md)
@@ -365,7 +365,7 @@ oc patch application cluster-management-gitops -n openshift-gitops --type merge 
 
 1. **Adding New Capabilities**: Create new base configurations in `capabilities/kustomize/bases/`
 2. **Adding New Clusters**: Create cluster-specific configurations in `clusters/`
-3. **Adding New Groups**: Create group configurations in `cluster-groups/kustomize/groups/`
+3. **Adding New Groups**: Create group configurations in `groups/kustomize/groups/`
 4. **Testing Changes**: Run validation tests before committing changes
 
 ### Development Workflow

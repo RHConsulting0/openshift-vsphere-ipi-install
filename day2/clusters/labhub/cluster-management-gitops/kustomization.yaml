@@ -17,6 +17,6 @@ helmGlobals:
 # install cluster capabilities
 helmCharts:
 - name: application-set
-  version: 1.0.0
-  repo: oci://quay.io/cpigues/helm-charts
+  version: 3.0.0
+  repo: "file://../../../capabilities/helm/charts/application-set"
   valuesFile: application-set_values.yaml

@@ -10,6 +10,5 @@ operators:
   name: openshift-gitops-operator
   source: redhat-operators
   sourceNamespace: openshift-marketplace
-  csv: openshift-gitops-operator.v1.18.0
-#  csv: openshift-gitops-operator.v1.17.0       # Original value for ocp 4.17
+  csv: openshift-gitops-operator.v1.17.0
   namespace: openshift-gitops-operator

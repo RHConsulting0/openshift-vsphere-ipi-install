@@ -16,5 +16,6 @@ resources:
 
 generators:
 - PolicyGenerator_cluster-management.yaml
+# DEPRECATED
 # TODO: Temporarily disable as this is broken, troubleshooting in-progress.
 # - PolicyGenerator_tenant-management.yaml
