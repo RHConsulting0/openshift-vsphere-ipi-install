@@ -1,0 +1,23 @@
+approveManualInstallPlanViaHook: true
+
+# use pull secret to pull image from local private registry
+installPlanApproverAndVerifyJobsImage: registry.localhost/origin-cli:4.15
+installPlanApproverAndVerifyJobsImagePullSecret: local-registry-pullsecret
+
+operatorGroups:
+- name: external-secrets-operator
+  createNamespace: false
+  targetOwnNamespace: false
+  otherTargetNamespaces:
+
+operators:
+- channel: stable
+  installPlanApproval: Manual
+  name: external-secrets-operator
+  source: operatorhubio-catalog
+  sourceNamespace: olm
+  csv: external-secrets-operator.v0.8.1
+  namespace: external-secrets-operator
+  installPlanVerifierActiveDeadlineSeconds: 1200
+commonLabels:
+  test-label: xyz123

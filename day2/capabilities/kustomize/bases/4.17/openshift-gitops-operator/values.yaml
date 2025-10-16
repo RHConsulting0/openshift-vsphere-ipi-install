@@ -3,6 +3,7 @@ operatorGroups:
 - name: openshift-gitops-operator
   createNamespace: true
   targetOwnNamespace: false
+
 operators:
 - channel: latest
   installPlanApproval: Manual

@@ -1,0 +1,67 @@
+{{- range .Values.operators }}
+{{- if eq .installPlanApproval "Manual" }}
+---
+# create one installplan-complete-verifier job per manual operator
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ printf "%s-%s" .csv "verifier" | trunc -63 | replace "." "-" |  trimAll "-" }}
+  namespace: {{ .namespace | default $.Release.Namespace }}
+  labels:
+    {{- include "operators-installer.labels" $ | nindent 4 }}
+  annotations:
+    {{- if $.Values.approveManualInstallPlanViaHook }}
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+    "helm.sh/hook-weight": "30"
+    {{- else }}
+    argocd.argoproj.io/sync-wave: "-10"
+    {{- end }}
+spec:
+  completions: 1
+  parallelism: 1
+  backoffLimit: {{ .installPlanVerifierRetries | default 10 }}
+  activeDeadlineSeconds: {{ .installPlanVerifierActiveDeadlineSeconds }}
+  template:
+    spec:
+      {{- if $.Values.installPlanApproverAndVerifyJobsImagePullSecret }}
+      imagePullSecrets:
+        - name: {{ $.Values.installPlanApproverAndVerifyJobsImagePullSecret }}
+      {{- end }}
+      containers:
+      - name: installplan-complete-verifier
+        image: {{ $.Values.installPlanApproverAndVerifyJobsImage }}
+        command: ["/bin/sh","-c"]
+        args:
+          - >-
+              {{- if $.Values.installRequiredPythonLibraries }}
+              python3 -m venv /tmp/venv &&
+              source /tmp/venv/bin/activate &&
+              python3 -m pip install openshift-client semver==2.13.0 --index-url {{ $.Values.pythonIndexURL }} --extra-index-url {{ $.Values.pythonExtraIndexURL }} &&
+              {{- end }}
+              python3 /scripts/installplan-verifier.py
+        imagePullPolicy: Always
+        env:
+        - name: CSV
+          value: {{ .csv }}
+        - name: SUBSCRIPTION
+          value: {{ .name }}
+        - name: NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        volumeMounts:
+        - name: operators-installer-approver-scripts
+          mountPath: /scripts
+      volumes:
+      - name: operators-installer-approver-scripts
+        configMap:
+          name: {{ include "operators-installer.scriptsName" . }}
+          defaultMode: 0777
+      dnsPolicy: ClusterFirst
+      restartPolicy: Never
+      serviceAccount: {{ include "operators-installer.approverName" . }}
+      serviceAccountName: {{ include "operators-installer.approverName" . }}
+      terminationGracePeriodSeconds: 30
+{{- end }}
+{{- end }}
