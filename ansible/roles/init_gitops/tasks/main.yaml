@@ -5,14 +5,6 @@
     state: present
     template: "day2/.init/configure-eso.j2.yaml"
 
-# - name: Install OCM Operator (prerequisite)
-#   kubernetes.core.k8s:
-#     definition: "{{ lookup('kubernetes.core.kustomize',
-#                     dir='day2/capabilities/kustomize/bases/ocm-operator') }}"
-#     wait: true
-#     wait_timeout: 600
-#     register: ocm_operator_result
-
 - name: Install ACM Operator (prerequisite)
   kubernetes.core.k8s:
     definition: |
@@ -26,21 +18,6 @@
 - name: Install ACM operator result output (enable -v to see)
   ansible.builtin.debug:
     var: acm_operator_result
-    verbosity: 1
-
-- name: Install MultiClusterHub (prerequisite)
-  kubernetes.core.k8s:
-    definition: |
-      {{ lookup('kubernetes.core.kustomize',
-                dir='day2/.init/' + managing_cluster.foundation_cluster + '/acm-hub',
-                enable_helm=True) }}
-    wait: true
-    wait_timeout: 600
-    register: mch_operator_result
-
-- name: Install MCH operator result output (enable -v to see)
-  ansible.builtin.debug:
-    var: mch_operator_result
     verbosity: 1
 
 - name: Wait for OCM APIs to be ready
