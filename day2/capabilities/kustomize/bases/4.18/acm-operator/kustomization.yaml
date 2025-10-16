@@ -1,7 +1,26 @@
+---
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-resources:
-  - ./operatorgroup.yaml
-  - ./subscription.yaml
-  
+namespace: open-cluster-management
+
+labels:
+- includeSelectors: false
+  pairs:
+    app.kubernetes.io/name: open-cluster-management
+    app.kubernetes.io/component: cluster-management
+    app.kubernetes.io/part-of: platform-management
+
+helmCharts:
+- name: operators-installer
+  repo: https://redhat-cop.github.io/helm-charts
+  version: 3.2.4
+  valuesFile: values.yaml
+
+patches:
+- target:
+    group: operators.coreos.com
+    version: v1alpha1
+    kind: Subscription
+    name: open-cluster-management
+  path: Subscription-patch_openshift-gitops-operator.yaml

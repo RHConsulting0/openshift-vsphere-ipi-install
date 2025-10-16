@@ -11,12 +11,6 @@ labels:
     app.kubernetes.io/component: cluster-management
     app.kubernetes.io/part-of: platform-management
 
-# helmCharts:
-# - name: operators-installer
-#   repo: oci://quay.io/randyo
-#   version: 3.3.1
-#   valuesFile: values.yaml
-
 helmCharts:
 - name: operators-installer
   repo: https://redhat-cop.github.io/helm-charts

@@ -11,6 +11,9 @@ labels:
     app.kubernetes.io/component: governance
     app.kubernetes.io/part-of: platform-management
 
+# NOTE: setting chart home as a workaround for https://github.com/argoproj/argo-cd/issues/8008
+helmGlobals:
+  chartHome: ../../../../helm/charts/acm-operator
 helmCharts:
 - name: operators-installer
   repo: https://redhat-cop.github.io/helm-charts
