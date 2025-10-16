@@ -7,7 +7,10 @@
 
 - name: Install OpenShift GitOps operator
   kubernetes.core.k8s:
-    definition: "{{ lookup('kubernetes.core.kustomize', dir='day2/.init/' + managing_cluster.foundation_cluster + '/openshift-gitops-operator', enable_helm=True) }}"
+    definition: |
+      {{ lookup('kubernetes.core.kustomize',
+                dir='day2/.init/' + managing_cluster.foundation_cluster + '/openshift-gitops-operator',
+                enable_helm=True) }}
     wait: true
     wait_timeout: 600
   register: install_openshift_gitops_operator_result
@@ -52,11 +55,43 @@
 # install ACM/MCH ??
 - name: Configure cluster OpenShift GitOps (ArgoCD)
   kubernetes.core.k8s:
-    definition: "{{ lookup('kubernetes.core.kustomize', dir='day2/.init/' + managing_cluster.foundation_cluster + '/openshift-gitops', enable_helm=True) }}"
+    definition: |
+      {{ lookup('kubernetes.core.kustomize',
+                dir='day2/.init/' + managing_cluster.foundation_cluster + '/openshift-gitops',
+                enable_helm=True) }}
     wait: true
   register: configure_cluster_openshift_gitops
 
-#ACM and MCH should be installed!!!!
+- name: Wait for ACM operator to be installed and running
+  kubernetes.core.k8s_info:
+    api_version: apps/v1
+    kind: Deployment
+    namespace: open-cluster-management
+    label_selectors:
+      - app=multicluster-operators-subscription
+  register: acm_deployments
+  until:
+    - acm_deployments.resources | length > 0
+    - acm_deployments.resources[0].status.readyReplicas | default(0) > 0
+    - acm_deployments.resources[0].status.conditions |
+      selectattr('type', 'equalto', 'Available') |
+      selectattr('status', 'equalto', 'True') | list | length > 0
+  retries: 30
+  delay: 30
+  failed_when: false
+
+- name: Verify ACM operator is running successfully
+  assert:
+    that:
+      - acm_deployments.resources | length > 0
+      - acm_deployments.resources[0].status.readyReplicas | default(0) > 0
+      - acm_deployments.resources[0].status.conditions |
+        selectattr('type', 'equalto', 'Available') |
+        selectattr('status', 'equalto', 'True') | list | length > 0
+    fail_msg: "ACM operator failed to start after 15 minutes (30 retries × 30 seconds)"
+    success_msg: "ACM operator is installed and running successfully"
+
+# ACM and MCH should be installed!!!!
 
 - name: Configure cluster OpenShift GitOps (ArgoCD) result output (enable -v to see)
   ansible.builtin.debug:
@@ -73,7 +108,6 @@
     wait_timeout: 180                # Initially 300
   loop:
     - cluster-management
-    - tenant-management
   loop_control:
     loop_var: appproject
 
@@ -81,7 +115,10 @@
 
 - name: Install Application to initialize gitops reconciliation loop
   kubernetes.core.k8s:
-    definition: "{{ lookup('kubernetes.core.kustomize', dir='day2/.init/' + managing_cluster.foundation_cluster + '/foundation-cluster-management-root-application', enable_helm=True) }}"
+    definition: |
+      {{ lookup('kubernetes.core.kustomize',
+                dir='day2/.init/' + managing_cluster.foundation_cluster + '/foundation-cluster-management-root-application',
+                enable_helm=True) }}
     wait: true
   register: install_application_result
 
