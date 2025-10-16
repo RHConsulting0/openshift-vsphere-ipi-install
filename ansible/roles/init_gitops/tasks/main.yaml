@@ -52,6 +52,17 @@
     wait: true
     wait_timeout: 300
 
+- name: Label ManagedCluster (local-cluster) with apply-gitops=true
+  kubernetes.core.k8s:
+    definition:
+      apiVersion: cluster.open-cluster-management.io/v1
+      kind: ManagedCluster
+      metadata:
+        name: local-cluster
+        labels:
+          apply-gitops: "true"
+    wait: true
+
 # install ACM/MCH/OCM!!
 - name: Configure cluster OpenShift GitOps (ArgoCD)
   kubernetes.core.k8s:
@@ -127,16 +138,16 @@
     var: install_application_result
     verbosity: 1
 
-- name: Label ManagedCluster (local-cluster) with apply-gitops=true
-  kubernetes.core.k8s:
-    definition:
-      apiVersion: cluster.open-cluster-management.io/v1
-      kind: ManagedCluster
-      metadata:
-        name: local-cluster
-        labels:
-          apply-gitops: "true"
-    wait: true
+# - name: Label ManagedCluster (local-cluster) with apply-gitops=true
+#   kubernetes.core.k8s:
+#     definition:
+#       apiVersion: cluster.open-cluster-management.io/v1
+#       kind: ManagedCluster
+#       metadata:
+#         name: local-cluster
+#         labels:
+#           apply-gitops: "true"
+#     wait: true
 
 - name: Wait for ArgoCD Applications in openshift-gitops to be healthy and synced (10 second delay between attempts, time out at 20 minutes)
   kubernetes.core.k8s_info:
