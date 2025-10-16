@@ -1,8 +1,0 @@
-tenantName: $TENANT_NAME
-
-tenantEgressIp: PATCH_ME
-
-tenantWorkloads:
-  gitRepo: https://gitlab.consulting.redhat.com/platform-management-gitops/tenant-workloads/${TENANT_NAME}-workloads.git
-  gitRevision: main
-  path: '.'

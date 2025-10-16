@@ -187,7 +187,7 @@
       apiVersion: cluster.open-cluster-management.io/v1
       kind: ManagedCluster
       metadata:
-        name: local-cluster
+        name: "{{ actual_cluster_name | default('local-cluster') }}"
         labels:
           apply-gitops: "true"
     wait: true
