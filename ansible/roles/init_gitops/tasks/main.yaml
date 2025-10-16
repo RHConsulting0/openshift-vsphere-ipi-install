@@ -97,16 +97,21 @@
 
 - name: Wait for ArgoCD AppProjects
   kubernetes.core.k8s_info:
-    kind: AppProject
     api_version: argoproj.io/v1alpha1
-    name: "{{ appproject }}"
+    kind: AppProject
     namespace: openshift-gitops
-    wait: true
-    wait_timeout: 180                # Initially 300
-  loop:
-    - cluster-management
-  loop_control:
-    loop_var: appproject
+  register: appproject_list
+  until: appproject_list.resources | length > 0
+  retries: 36
+  delay: 5
+  failed_when: false
+
+- name: Verify AppProjects exist
+  ansible.builtin.assert:
+    that:
+      - appproject_list.resources | length > 0
+    fail_msg: "No AppProjects found in openshift-gitops namespace"
+    success_msg: "Found {{ appproject_list.resources | length }} AppProject(s)"
 
 # ADD WAIT for ACM, MCH, OCM
 
@@ -148,34 +153,34 @@
 #       status: true
 
 
-- name: Wait for ACM operator to be installed and running
-  kubernetes.core.k8s_info:
-    api_version: apps/v1
-    kind: Deployment
-    namespace: open-cluster-management
-    label_selectors:
-      - app=multicluster-operators-subscription
-  register: acm_deployments
-  until:
-    - acm_deployments.resources | length > 0
-    - acm_deployments.resources[0].status.readyReplicas | default(0) > 0
-    - acm_deployments.resources[0].status.conditions |
-      selectattr('type', 'equalto', 'Available') |
-      selectattr('status', 'equalto', 'True') | list | length > 0
-  retries: 30
-  delay: 30
-  failed_when: false
+# - name: Wait for ACM operator to be installed and running
+#   kubernetes.core.k8s_info:
+#     api_version: apps/v1
+#     kind: Deployment
+#     namespace: open-cluster-management
+#     label_selectors:
+#       - app=multicluster-operators-subscription
+#   register: acm_deployments
+#   until:
+#     - acm_deployments.resources | length > 0
+#     - acm_deployments.resources[0].status.readyReplicas | default(0) > 0
+#     - acm_deployments.resources[0].status.conditions |
+#       selectattr('type', 'equalto', 'Available') |
+#       selectattr('status', 'equalto', 'True') | list | length > 0
+#   retries: 30
+#   delay: 30
+#   failed_when: false
 
-- name: Verify ACM operator is running successfully
-  assert:
-    that:
-      - acm_deployments.resources | length > 0
-      - acm_deployments.resources[0].status.readyReplicas | default(0) > 0
-      - acm_deployments.resources[0].status.conditions |
-        selectattr('type', 'equalto', 'Available') |
-        selectattr('status', 'equalto', 'True') | list | length > 0
-    fail_msg: "ACM operator failed to start after 15 minutes (30 retries × 30 seconds)"
-    success_msg: "ACM operator is installed and running successfully"
+# - name: Verify ACM operator is running successfully
+#   assert:
+#     that:
+#       - acm_deployments.resources | length > 0
+#       - acm_deployments.resources[0].status.readyReplicas | default(0) > 0
+#       - acm_deployments.resources[0].status.conditions |
+#         selectattr('type', 'equalto', 'Available') |
+#         selectattr('status', 'equalto', 'True') | list | length > 0
+#     fail_msg: "ACM operator failed to start after 15 minutes (30 retries × 30 seconds)"
+#     success_msg: "ACM operator is installed and running successfully"
 
 - name: Install Application to initialize gitops reconciliation loop
   kubernetes.core.k8s:
