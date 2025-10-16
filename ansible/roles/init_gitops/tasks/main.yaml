@@ -181,6 +181,16 @@
 #         selectattr('status', 'equalto', 'True') | list | length > 0
 #     fail_msg: "ACM operator failed to start after 15 minutes (30 retries × 30 seconds)"
 #     success_msg: "ACM operator is installed and running successfully"
+- name: Label ManagedCluster (local-cluster) with apply-gitops=true
+  kubernetes.core.k8s:
+    definition:
+      apiVersion: cluster.open-cluster-management.io/v1
+      kind: ManagedCluster
+      metadata:
+        name: local-cluster
+        labels:
+          apply-gitops: "true"
+    wait: true
 
 - name: Install Application to initialize gitops reconciliation loop
   kubernetes.core.k8s:
@@ -208,16 +218,16 @@
       status: "True"
   register: managedcluster_crd_result
 
-- name: Label ManagedCluster (local-cluster) with apply-gitops=true
-  kubernetes.core.k8s:
-    definition:
-      apiVersion: cluster.open-cluster-management.io/v1
-      kind: ManagedCluster
-      metadata:
-        name: local-cluster
-        labels:
-          apply-gitops: "true"
-    wait: true
+# - name: Label ManagedCluster (local-cluster) with apply-gitops=true
+#   kubernetes.core.k8s:
+#     definition:
+#       apiVersion: cluster.open-cluster-management.io/v1
+#       kind: ManagedCluster
+#       metadata:
+#         name: local-cluster
+#         labels:
+#           apply-gitops: "true"
+#     wait: true
 
 - name: Wait for ArgoCD Applications in openshift-gitops to be healthy and synced (10 second delay between attempts, time out at 20 minutes)
   kubernetes.core.k8s_info:
