@@ -13,7 +13,7 @@
                 enable_helm=True) }}
     wait: true
     wait_timeout: 600
-    register: acm_operator_result
+  register: acm_operator_result
 
 - name: Install ACM operator result output (enable -v to see)
   ansible.builtin.debug:

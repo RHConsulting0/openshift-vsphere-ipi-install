@@ -7,20 +7,15 @@ namespace: open-cluster-management
 labels:
 - includeSelectors: false
   pairs:
-    app.kubernetes.io/name: open-cluster-management
-    app.kubernetes.io/component: cluster-management
+    app.kubernetes.io/name: rhacm-operator
+    app.kubernetes.io/component: governance
     app.kubernetes.io/part-of: platform-management
 
+# NOTE: setting chart home as a workaround for https://github.com/argoproj/argo-cd/issues/8008
+helmGlobals:
+  chartHome: ../../../../helm/charts/acm-operator
 helmCharts:
 - name: operators-installer
   repo: https://redhat-cop.github.io/helm-charts
   version: 3.2.4
   valuesFile: values.yaml
-
-patches:
-- target:
-    group: operators.coreos.com
-    version: v1alpha1
-    kind: Subscription
-    name: open-cluster-management
-  path: Subscription-patch_openshift-gitops-operator.yaml

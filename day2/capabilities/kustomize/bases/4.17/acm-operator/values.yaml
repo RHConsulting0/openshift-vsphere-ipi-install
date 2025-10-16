@@ -1,8 +1,9 @@
 ---
 operatorGroups:
 - name: open-cluster-management
-  createNamespace: false # Let Argo Application create it so it can give itself namespace admin
+  createNamespace: true # Update this to: Let Argo Application create it so it can give itself namespace admin
   targetOwnNamespace: true
+
 operators:
 - channel: release-2.14
   installPlanApproval: Manual
@@ -10,5 +11,5 @@ operators:
   name: advanced-cluster-management
   source: redhat-operators
   sourceNamespace: openshift-marketplace
-  csv: advanced-cluster-management.v2.14
+  csv: advanced-cluster-management.v2.14.0
   namespace: open-cluster-management
