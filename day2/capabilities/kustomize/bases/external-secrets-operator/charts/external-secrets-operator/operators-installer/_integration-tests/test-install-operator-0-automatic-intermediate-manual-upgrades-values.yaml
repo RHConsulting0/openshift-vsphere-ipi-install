@@ -1,0 +1,24 @@
+approveManualInstallPlanViaHook: true
+
+installPlanApproverAndVerifyJobsImage: quay.io/openshift/origin-cli:4.15
+
+operatorGroups:
+- name: argocd-operator
+  createNamespace: true
+  targetOwnNamespace: false
+  otherTargetNamespaces:
+
+operators:
+- name: argocd-operator
+  channel: alpha
+  csv: argocd-operator.v0.8.0
+  installPlanApproval: Manual
+  source: operatorhubio-catalog
+  sourceNamespace: olm
+  namespace: argocd-operator
+  installPlanVerifierActiveDeadlineSeconds: 1200
+  automaticIntermediateManualUpgrades: true
+  config:
+    env:
+    - name: DISABLE_DEFAULT_ARGOCD_INSTANCE
+      value: "true"

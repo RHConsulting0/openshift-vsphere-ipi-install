@@ -1,0 +1,19 @@
+approveManualInstallPlanViaHook: true
+
+installPlanApproverAndVerifyJobsImage: quay.io/openshift/origin-cli:4.15
+
+operatorGroups:
+- name: aqua-operator
+  createNamespace: true
+  targetOwnNamespace: true
+  otherTargetNamespaces:
+
+operators:
+- name: aqua
+  channel: 2022.4.0
+  csv: aqua-operator.2022.4.14
+  installPlanApproval: Manual
+  source: operatorhubio-catalog
+  sourceNamespace: olm
+  namespace: aqua-operator
+  installPlanVerifierActiveDeadlineSeconds: 1200
