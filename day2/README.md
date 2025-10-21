@@ -5,7 +5,7 @@ This directory contains the complete GitOps configuration management system for 
 ## 📋 Table of Contents
 
 - [Overview](#-overview)
-- [Architecture](#-architecture)
+- [Architecture](#%EF%B8%8F-architecture)
 - [Directory Structure](#-directory-structure)
 - [Key Components](#-key-components)
 - [Quick Start](#-quick-start)
@@ -23,7 +23,7 @@ The Day2 Operations directory implements a comprehensive GitOps-based platform m
 
 - **Automated Cluster Management**: Deploy and configure OpenShift clusters using GitOps principles
 - **Capability Management**: Reusable components and configurations for cluster capabilities
-- **Multi-Environment Support**: Support for hub clusters, workload clusters, and tenant configurations
+- **Multi-Environment Support**: Support for hub clusters and workload clusters
 - **Policy-Driven Configuration**: ACM policies for consistent cluster configuration
 - **Helm and Kustomize Integration**: Flexible deployment strategies using both tools
 - **Comprehensive Testing**: Automated validation of all configurations
@@ -36,8 +36,7 @@ graph TB
         A[day2/] --> B[capabilities/]
         A --> C[groups/]
         A --> D[clusters/]
-        A --> E[tenants/]
-        A --> F[tests/]
+        A --> E[tests/]
     end
     
     subgraph "Capabilities"
@@ -48,12 +47,12 @@ graph TB
     
     subgraph "Cluster Groups"
         C --> J[all/]
-        C --> K[hub-lab/]
+        C --> K[hub/]
         C --> L[dev-protected/]
     end
     
     subgraph "Clusters"
-        D --> M[hub-lab/]
+        D --> M[labhub/]
         D --> N[lab/]
     end
     
@@ -65,6 +64,8 @@ graph TB
     
     A --> O
 ```
+
+> **Note**: This diagram uses [Mermaid syntax](https://mermaid.js.org/syntax/flowchart.html). For more information about Mermaid diagrams, see the [Mermaid documentation](https://mermaid.js.org/).
 
 ## 📁 Directory Structure
 
@@ -98,12 +99,12 @@ day2/
 │   │   └── groups/
 │   │       ├── all/                   # All clusters group
 │   │       ├── dev-protected/         # Protected dev clusters
-│   │       ├── hub-lab/               # Hub lab cluster group
-│   │       ├── hub-lab-protected/     # Protected hub lab group
+│   │       ├── hub/                   # Hub cluster group
+│   │       ├── hub-protected/         # Protected hub group
 │   │       └── lab/                   # Lab cluster group
 │   └── tests/                         # Group validation tests
 ├── clusters/                          # Individual cluster configurations
-│   ├── hub-lab/                       # Hub lab cluster
+│   ├── labhub/                        # Hub lab cluster
 │   │   ├── capabilities/              # Hub-specific capabilities
 │   │   │   ├── acm-policies-openshift-gitops/  # ACM policies
 │   │   │   ├── custom-cluster-name/   # Custom cluster naming
@@ -113,15 +114,9 @@ day2/
 │   │   └── kustomization.yaml         # Hub lab kustomization
 │   └── lab/                           # Lab workload cluster
 │       ├── capabilities/              # Lab-specific capabilities
-│       │   ├── tenant-gitops/         # Tenant GitOps configuration
 │       │   └── web-console-cluster-customization/  # Console customization
 │       ├── cluster-management-gitops/ # Cluster management GitOps
 │       └── kustomization.yaml         # Lab cluster kustomization
-├── tenants/                           # Multi-tenant configurations
-│   ├── clusters/                      # Tenant cluster configs
-│   │   ├── example-tenant/            # Example tenant configuration
-│   │   └── lab/                       # Lab tenant configuration
-│   └── tests/                         # Tenant validation tests
 └── tests/                             # General validation tests
     └── test-all-kustomization-builds-playbook.yaml
 ```
@@ -132,41 +127,57 @@ day2/
 
 Reusable components that can be deployed across multiple clusters:
 
-- **Helm Charts**: Packaged applications and configurations
+- **`helm/`**: Helm charts for packaged applications and configurations
   - `application-set`: ArgoCD ApplicationSet management
   - `compute-gitops`: Compute cluster GitOps configuration
+  - `operators-installer-3.2.4`: Operator installation automation
 
-- **Kustomize Bases**: Base configurations for common capabilities
+- **`kustomize/`**: Kustomize base configurations for common capabilities
   - ACM (Advanced Cluster Management) configurations
   - External Secrets Operator
   - Identity and OAuth configuration
   - Kubelet tuning and node maintenance
   - OpenShift GitOps operator
 
+- **`tests/`**: Validation and testing framework
+  - Kustomize build validation
+  - Helm chart testing
+  - Integration testing
+
 ### 2. Cluster Groups (`groups/`)
 
 Logical groupings of clusters with shared capabilities:
 
-- **`all`**: Capabilities applied to all clusters
-- **`hub-lab`**: Hub cluster specific capabilities
-- **`hub-lab-protected`**: Protected hub capabilities (cascade delete protection)
-- **`dev-protected`**: Protected development cluster capabilities
-- **`lab`**: Lab cluster specific capabilities
+- **`all/`**: Capabilities applied to all clusters
+  - External Secrets Operator
+  - Identity configuration
+  - Universal security policies
+
+- **`hub/`**: Hub cluster specific capabilities
+  - ACM policies for OpenShift GitOps
+  - Hub management configurations
+
+- **`hub-protected/`**: Protected hub capabilities (cascade delete protection)
+  - ACM hub configuration
+  - ACM operator management
+  - Critical hub infrastructure
+
+- **`dev-protected/`**: Protected development cluster capabilities
+  - ODF (OpenShift Data Foundation) configuration
+  - ODF operator management
+  - Development-specific storage
+
+- **`lab/`**: Lab cluster specific capabilities
+  - Lab environment configurations
+  - Testing and validation tools
 
 ### 3. Clusters (`clusters/`)
 
 Individual cluster configurations:
 
-- **`hub-lab`**: Hub cluster for managing other clusters
+- **`labhub`**: Hub cluster for managing other clusters
 - **`lab`**: Workload cluster for applications and services
 
-### 4. Tenants (`tenants/`)
-
-Multi-tenant configurations for isolated workloads:
-
-- Tenant-specific cluster configurations
-- Resource isolation and management
-- Custom tenant capabilities
 
 ## 🚀 Quick Start
 
@@ -180,7 +191,7 @@ Multi-tenant configurations for isolated workloads:
 
 ```bash
 # Deploy hub lab cluster configuration
-kustomize build clusters/hub-lab/ | oc apply -f -
+kustomize build clusters/labhub/ | oc apply -f -
 
 # Verify deployment
 oc get applications -n openshift-gitops
@@ -239,7 +250,7 @@ applicationSetDefaults:
 ### Environment-Specific Configuration
 
 - **Development**: Use `dev-protected` group for development clusters
-- **Production**: Use `hub-lab-protected` for production hub clusters
+- **Production**: Use `hub-protected` for production hub clusters
 - **Testing**: Use `lab` group for testing and validation
 
 ## 🚀 Deployment Strategies
@@ -284,7 +295,6 @@ spec:
 
 - **Hub Clusters**: Manage multiple workload clusters
 - **Workload Clusters**: Run applications and services
-- **Tenant Clusters**: Isolated environments for specific tenants
 
 ## 🧪 Testing and Validation
 
@@ -358,7 +368,6 @@ oc patch application cluster-management-gitops -n openshift-gitops --type merge 
 - [Capabilities Documentation](capabilities/README.md)
 - [Cluster Groups Documentation](groups/README.md)
 - [Clusters Documentation](clusters/README.md)
-- [Tenants Documentation](tenants/README.md)
 - [Testing Documentation](tests/README.md)
 
 ## 🤝 Contributing

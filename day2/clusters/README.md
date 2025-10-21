@@ -6,7 +6,7 @@ This directory contains specific configurations for individual OpenShift cluster
 
 - [Overview](#-overview)
 - [Directory Structure](#-directory-structure)
-- [Cluster Types](#-cluster-types)
+- [Cluster Types](#%EF%B8%8F-cluster-types)
 - [Configuration Management](#️-configuration-management)
 - [Usage Examples](#-usage-examples)
 - [Testing](#-testing)
@@ -29,48 +29,46 @@ The clusters directory provides cluster-specific configurations that build upon 
 ```
 clusters/
 ├── README.md                           # This file
-├── hub-lab/                           # Hub lab cluster configuration
+├── labhub/                            # Hub lab cluster configuration
 │   ├── capabilities/                  # Hub-specific capabilities
 │   │   ├── acm-policies-openshift-gitops/  # ACM policies for GitOps
 │   │   │   ├── kustomization.yaml
-│   │   │   ├── cluster-gitops-repository-configuration/
-│   │   │   └── README.md
+│   │   │   └── cluster-gitops-repository-configuration/
 │   │   ├── custom-cluster-name/       # Custom cluster naming
 │   │   │   ├── kustomization.yaml
-│   │   │   └── cluster-name-patch.yaml
+│   │   │   ├── ClusterClaim_custom-cluster-name.yaml
+│   │   │   └── README-hack.md
 │   │   ├── managed-clusters/          # Managed cluster configurations
 │   │   │   ├── kustomization.yaml
 │   │   │   └── lab/
 │   │   │       └── cluster-gitops-repository-configuration/
-│   │   └── web-console-cluster-customization/  # Console customization
-│   │       ├── kustomization.yaml
-│   │       └── console-customization.yaml
+│   │   ├── web-console-cluster-customization/  # Console customization
+│   │   │   ├── kustomization.yaml
+│   │   │   └── ConsoleNotification_cluster.yaml
+│   │   └── README.md                  # Hub capabilities documentation
 │   ├── cluster-management-gitops/     # Cluster management GitOps
 │   │   ├── application-set-values.yaml
-│   │   ├── kustomization.yaml
-│   │   └── charts/
-│   │       └── cluster-management-gitops/
+│   │   └── kustomization.yaml
+│   ├── managed-clusters/              # Additional managed cluster configs
+│   │   └── lab/
+│   │       ├── cluster-gitops-repository-configuration/
+│   │       └── kustomization.yaml
 │   └── kustomization.yaml             # Hub lab main kustomization
 └── lab/                               # Lab workload cluster configuration
     ├── capabilities/                  # Lab-specific capabilities
-    │   ├── tenant-gitops/             # Tenant GitOps configuration
+    │   ├── web-console-cluster-customization/  # Console customization
     │   │   ├── kustomization.yaml
-    │   │   └── charts/
-    │   │       └── vpc-gitops/
-    │   └── web-console-cluster-customization/  # Console customization
-    │       ├── kustomization.yaml
-    │       └── console-customization.yaml
+    │   │   └── ConsoleNotification_cluster.yaml
+    │   └── README.md                  # Lab capabilities documentation
     ├── cluster-management-gitops/     # Cluster management GitOps
-    │   ├── application-set-values.yaml
-    │   ├── kustomization.yaml
-    │   └── charts/
-    │       └── cluster-management-gitops/
+    │   ├── application-set_values.yaml
+    │   └── kustomization.yaml
     └── kustomization.yaml             # Lab cluster main kustomization
 ```
 
 ## 🏗️ Cluster Types
 
-### 1. Hub Lab Cluster (`hub-lab/`)
+### 1. Hub Lab Cluster (`labhub/`)
 
 **Purpose**: Central hub cluster for managing multiple workload clusters
 
@@ -90,7 +88,7 @@ clusters/
 **Usage:**
 ```bash
 # Deploy hub lab cluster configuration
-kustomize build clusters/hub-lab/ | oc apply -f -
+kustomize build clusters/labhub/ | oc apply -f -
 
 # Verify hub cluster deployment
 oc get applications -n openshift-gitops
@@ -103,12 +101,11 @@ oc get managedclusters
 
 **Key Features:**
 - **Application Workloads**: Runs business applications and services
-- **Tenant Support**: Multi-tenant configurations and isolation
+- **Application Support**: Application configurations and isolation
 - **GitOps Integration**: Managed by hub cluster through GitOps
 - **Customized Environment**: Lab-specific configurations and tools
 
 **Capabilities:**
-- Tenant GitOps configuration
 - Web console customization
 - Lab-specific tools and configurations
 - Development and testing environments
@@ -120,7 +117,7 @@ kustomize build clusters/lab/ | oc apply -f -
 
 # Verify lab cluster deployment
 oc get applications -n openshift-gitops
-oc get tenants
+oc get consolelink
 ```
 
 ## ⚙️ Configuration Management
@@ -130,7 +127,7 @@ oc get tenants
 Each cluster follows a consistent Kustomize structure:
 
 ```yaml
-# Example: clusters/hub-lab/kustomization.yaml
+# Example: clusters/labhub/kustomization.yaml
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
@@ -154,7 +151,7 @@ Each cluster includes capabilities specific to its role:
 - Policy enforcement
 
 **Lab Capabilities:**
-- Tenant management
+- Application management
 - Application workloads
 - Development tools
 - Testing frameworks
@@ -178,7 +175,7 @@ applicationSetDefaults:
 
 ```bash
 # Deploy complete hub lab configuration
-kustomize build clusters/hub-lab/ | oc apply -f -
+kustomize build clusters/labhub/ | oc apply -f -
 
 # Verify hub cluster components
 oc get applications -n openshift-gitops
@@ -194,7 +191,6 @@ kustomize build clusters/lab/ | oc apply -f -
 
 # Verify lab cluster components
 oc get applications -n openshift-gitops
-oc get tenants
 oc get consolelink
 ```
 
@@ -202,17 +198,17 @@ oc get consolelink
 
 ```bash
 # Deploy only ACM policies
-kustomize build clusters/hub-lab/capabilities/acm-policies-openshift-gitops/ | oc apply -f -
+kustomize build clusters/labhub/capabilities/acm-policies-openshift-gitops/ | oc apply -f -
 
-# Deploy only tenant GitOps
-kustomize build clusters/lab/capabilities/tenant-gitops/ | oc apply -f -
+# Deploy only web console customization
+kustomize build clusters/lab/capabilities/web-console-cluster-customization/ | oc apply -f -
 ```
 
 ### 4. Customize Cluster Configurations
 
 ```bash
 # Apply custom patches
-kustomize build clusters/hub-lab/ --enable-patches | oc apply -f -
+kustomize build clusters/labhub/ --enable-patches | oc apply -f -
 
 # Override specific values
 kustomize build clusters/lab/ --enable-helm | oc apply -f -
@@ -229,7 +225,7 @@ The clusters directory includes comprehensive testing:
 ansible-playbook tests/test-all-kustomization-builds-playbook.yaml
 
 # Test specific cluster
-kustomize build clusters/hub-lab/
+kustomize build clusters/labhub/
 
 # Test with validation
 kustomize build clusters/lab/ | oc apply --dry-run=client -f -
@@ -281,14 +277,14 @@ kustomize build clusters/lab/ | oc apply --dry-run=client -f -
 
 5. **Test Configuration**:
    ```bash
-   kustomize build clusters/new-cluster/
+   kustomize build clusters/labhub/
    ```
 
 ### Modifying Existing Clusters
 
 1. **Edit Cluster Configuration**:
    ```bash
-   vim clusters/existing-cluster/kustomization.yaml
+   vim clusters/labhub/kustomization.yaml
    ```
 
 2. **Add or Remove Capabilities**:
@@ -300,7 +296,7 @@ kustomize build clusters/lab/ | oc apply --dry-run=client -f -
 
 3. **Test Changes**:
    ```bash
-   kustomize build clusters/existing-cluster/
+   kustomize build clusters/labhub/
    ```
 
 ### Adding New Capabilities
@@ -384,7 +380,7 @@ kustomize build clusters/cluster-name/ | oc apply --dry-run=client -f -
 ### Lab Cluster Management
 
 - **Application Workloads**: Runs business applications
-- **Tenant Isolation**: Provides multi-tenant support
+- **Application Isolation**: Provides application isolation support
 - **Development Tools**: Supports development and testing
 - **Custom Configurations**: Lab-specific customizations
 

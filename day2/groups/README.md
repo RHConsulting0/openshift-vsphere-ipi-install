@@ -6,7 +6,7 @@ This directory contains logical groupings of clusters with shared capabilities, 
 
 - [Overview](#-overview)
 - [Directory Structure](#-directory-structure)
-- [Group Types](#-group-types)
+- [Group Types](#%EF%B8%8F-group-types)
 - [Configuration Management](#️-configuration-management)
 - [Usage Examples](#-usage-examples)
 - [Testing](#-testing)

@@ -57,7 +57,7 @@ tests/
 - Base configurations in `capabilities/kustomize/bases/`
 - Group configurations in `groups/kustomize/groups/`
 - Cluster configurations in `clusters/`
-- Tenant configurations in `tenants/` (if present)
+- Application configurations in `applications/` (if present)
 
 **Test Features:**
 - Recursive discovery of kustomization files

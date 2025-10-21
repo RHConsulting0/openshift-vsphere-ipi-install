@@ -23,11 +23,36 @@ The capabilities directory provides a library of reusable components for OpenShi
 - **Kustomize Bases**: Base configurations for common capabilities
 - **Testing Framework**: Automated validation of all components
 
+### Key Features
+
+- **Reusability**: Components can be used across multiple clusters
+- **Consistency**: Standardized configurations ensure consistency
+- **Flexibility**: Both Helm and Kustomize support for different use cases
+- **Validation**: Comprehensive testing framework
+- **Documentation**: Detailed documentation for each capability
+
 ## 📁 Directory Structure
 
 ```
 capabilities/
 ├── README.md                           # This file
+├── helm/                              # Helm charts
+│   └── charts/
+│       ├── application-set/           # ArgoCD ApplicationSet chart
+│       ├── compute-gitops/            # GitOps instance chart
+│       └── operators-installer-3.2.4/ # Operator installation chart
+├── kustomize/                         # Kustomize base configurations
+│   └── bases/
+│       ├── acm-hub/                   # ACM hub configuration
+│       ├── acm-operator/              # ACM operator installation
+│       ├── external-secrets-operator/ # External Secrets Operator
+│       ├── identity-configuration/    # Identity provider config
+│       ├── kubelet-configuration/     # Kubelet tuning
+│       ├── node-maintenance-operator/ # Node maintenance
+│       ├── oauth-configuration/       # OAuth configuration
+│       └── openshift-gitops/          # OpenShift GitOps
+└── tests/                             # Validation tests
+    └── test-all-kustomization-builds-playbook.yaml
 ├── helm/                              # Helm charts for capabilities
 │   └── charts/
 │       ├── application-set/           # ArgoCD ApplicationSet management
